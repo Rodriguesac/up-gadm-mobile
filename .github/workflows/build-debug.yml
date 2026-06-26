@@ -24,7 +24,7 @@ jobs:
           gradle-version: '8.13'
 
       - name: Build Debug
-        run: gradle :app:assembleDebug --stacktrace
+        run: gradle :app:assembleDebug
 
       - name: Guardar APK
         uses: actions/upload-artifact@v4
