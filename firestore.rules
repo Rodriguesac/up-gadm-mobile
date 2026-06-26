@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function role() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role;
+    }
+
+    function isGadm() {
+      return signedIn() && (role() == 'ADMIN' || role() == 'GESTOR');
+    }
+
+    match /usuarios/{userId} {
+      allow read: if signedIn() && (request.auth.uid == userId || isGadm());
+      allow create, update, delete: if signedIn() && role() == 'ADMIN';
+    }
+
+    match /pedidos/{orderId} {
+      allow read: if isGadm() || (signedIn() && resource.data.cliente.uid == request.auth.uid);
+      allow update: if isGadm();
+      allow create: if signedIn();
+      allow delete: if signedIn() && role() == 'ADMIN';
+    }
+
+    match /entregadores/{driverId} {
+      allow read: if isGadm() || (signedIn() && request.auth.uid == driverId);
+      allow update: if isGadm() || (signedIn() && request.auth.uid == driverId);
+      allow create: if signedIn();
+      allow delete: if signedIn() && role() == 'ADMIN';
+    }
+  }
+}
