@@ -231,9 +231,11 @@ class FirebaseGateway {
 
     private fun DocumentSnapshot.toOperationalOrderOrNull(): OperationalOrder? {
         return try {
-            val customer = getMap("cliente").orEmpty()
-            val addressMap = getMap("endereco").orEmpty()
-            val paymentMap = getMap("pagamento").orEmpty()
+            // Firestore Android não oferece getMap(). Campos aninhados vêm por get().
+            // A conversão abaixo aceita HashMap/Map do Firestore sem quebrar se o campo faltar.
+            val customer = get("cliente").asStringMap()
+            val addressMap = get("endereco").asStringMap()
+            val paymentMap = get("pagamento").asStringMap()
             val rawItems = get("itens") as? List<*> ?: get("produtos") as? List<*> ?: emptyList<Any>()
             val parsedItems = rawItems.mapNotNull { raw ->
                 val item = raw as? Map<*, *> ?: return@mapNotNull null
@@ -297,8 +299,20 @@ class FirebaseGateway {
         }
     }
 
-    private fun firstString(map: Map<String, Any>, keys: List<String>): String? {
-        return keys.firstNotNullOfOrNull { key -> map[key]?.toString()?.takeIf { it.isNotBlank() } }
+    private fun Any?.asStringMap(): Map<String, Any?> {
+        val raw = this as? Map<*, *> ?: return emptyMap()
+        return buildMap {
+            raw.forEach { (key, value) ->
+                val textKey = key as? String ?: return@forEach
+                put(textKey, value)
+            }
+        }
+    }
+
+    private fun firstString(map: Map<String, Any?>, keys: List<String>): String? {
+        return keys.firstNotNullOfOrNull { key ->
+            map[key]?.toString()?.trim()?.takeIf { it.isNotBlank() }
+        }
     }
 
     private fun Any?.asDouble(): Double = when (this) {
