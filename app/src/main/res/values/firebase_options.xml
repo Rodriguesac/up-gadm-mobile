@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="google_app_id" translatable="false">1:1010835711502:android:979e8dadff59ad17d6be5f</string>
+    <string name="gcm_defaultSenderId" translatable="false">1010835711502</string>
+    <string name="default_web_client_id" translatable="false"></string>
+    <string name="ga_trackingId" translatable="false"></string>
+    <string name="google_api_key" translatable="false">AIzaSyBkCcdbR8Z9V9DB0wAJfC_YiRaNe8nnaA4</string>
+    <string name="google_storage_bucket" translatable="false">rodrigues-d6566.firebasestorage.app</string>
+    <string name="project_id" translatable="false">rodrigues-d6566</string>
+</resources>

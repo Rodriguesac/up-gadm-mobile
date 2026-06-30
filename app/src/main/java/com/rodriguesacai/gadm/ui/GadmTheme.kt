@@ -2,13 +2,7 @@ package com.rodriguesacai.gadm.ui
 
 import androidx.compose.ui.graphics.Color
 
-/**
- * Paleta central do GADM Mobile.
- *
- * O UpGestorApp usa estes nomes diretamente. Eles precisam ficar no mesmo
- * package do app para que todas as telas Compose enxerguem as cores sem
- * imports repetidos.
- */
+/** Paleta única usada pelo UpGestorApp. */
 internal val GadmNavy = Color(0xFF08164A)
 internal val GadmSurface = Color(0xFFF6F8FC)
 internal val GadmSurfaceStrong = Color(0xFF17245A)
