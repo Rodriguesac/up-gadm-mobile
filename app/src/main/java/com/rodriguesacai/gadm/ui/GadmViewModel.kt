@@ -1,131 +1,116 @@
 package com.rodriguesacai.gadm.ui
 
+import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
-import com.google.firebase.firestore.ListenerRegistration
-import com.rodriguesacai.gadm.data.FirebaseGateway
-import com.rodriguesacai.gadm.data.GadmUiState
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.rodriguesacai.gadm.data.GadmCustomer
+import com.rodriguesacai.gadm.data.GadmDriver
+import com.rodriguesacai.gadm.data.GadmFinanceEntry
+import com.rodriguesacai.gadm.data.GadmIncident
+import com.rodriguesacai.gadm.data.GadmOrder
+import com.rodriguesacai.gadm.data.GadmProduct
+import com.rodriguesacai.gadm.data.GadmRepository
 import com.rodriguesacai.gadm.data.GadmUser
-import com.rodriguesacai.gadm.data.OperationalOrder
-import com.rodriguesacai.gadm.data.OrderStatus
+import com.rodriguesacai.gadm.data.StoreOperation
+import kotlinx.coroutines.launch
 
-class GadmViewModel : ViewModel() {
-    private val gateway = FirebaseGateway()
-    private var ordersListener: ListenerRegistration? = null
+data class GadmUiState(
+    val user: GadmUser? = null,
+    val orders: List<GadmOrder> = emptyList(),
+    val drivers: List<GadmDriver> = emptyList(),
+    val customers: List<GadmCustomer> = emptyList(),
+    val incidents: List<GadmIncident> = emptyList(),
+    val products: List<GadmProduct> = emptyList(),
+    val finance: List<GadmFinanceEntry> = emptyList(),
+    val operation: StoreOperation = StoreOperation(),
+    val loading: Boolean = true,
+    val message: String? = null
+)
+
+class GadmViewModel(application: Application) : AndroidViewModel(application) {
+    private val repository = GadmRepository()
 
     var state by mutableStateOf(GadmUiState())
         private set
 
     init {
-        restoreSession()
+        viewModelScope.launch { repository.observeOrders().collect { state = state.copy(orders = it, loading = false) } }
+        viewModelScope.launch { repository.observeDrivers().collect { state = state.copy(drivers = it) } }
+        viewModelScope.launch { repository.observeCustomers().collect { state = state.copy(customers = it) } }
+        viewModelScope.launch { repository.observeIncidents().collect { state = state.copy(incidents = it) } }
+        viewModelScope.launch { repository.observeProducts().collect { state = state.copy(products = it) } }
+        viewModelScope.launch { repository.observeFinance().collect { state = state.copy(finance = it) } }
+        viewModelScope.launch { repository.observeStoreOperation().collect { state = state.copy(operation = it) } }
     }
 
-    fun restoreSession() {
-        state = state.copy(loading = true, error = null)
-        gateway.restoreSession { result ->
-            result.fold(
-                onSuccess = { user ->
-                    state = state.copy(loading = false, currentUser = user, error = null)
-                    if (user != null) startOrdersListener()
-                },
-                onFailure = { error ->
-                    state = state.copy(loading = false, currentUser = null, error = error.message ?: "Não foi possível iniciar o GADM.")
-                }
-            )
+    fun dismissMessage() { state = state.copy(message = null) }
+
+    fun login(pin: String) {
+        viewModelScope.launch {
+            repository.signIn(pin)
+                .onSuccess { state = state.copy(user = it, message = "Acesso liberado: ${it.name}") }
+                .onFailure { state = state.copy(message = it.message ?: "Não foi possível entrar.") }
         }
     }
 
-    fun signIn(email: String, password: String) {
-        state = state.copy(busy = true, error = null, info = null)
-        gateway.signIn(email, password) { result ->
-            result.fold(
-                onSuccess = { user ->
-                    state = state.copy(busy = false, currentUser = user, error = null, info = "Acesso liberado para ${user.name}.")
-                    startOrdersListener()
-                },
-                onFailure = { error ->
-                    state = state.copy(busy = false, error = error.message ?: "Falha ao entrar.")
-                }
-            )
-        }
-    }
+    fun logout() { state = state.copy(user = null, message = "Sessão encerrada.") }
 
-    fun signOut() {
-        ordersListener?.remove()
-        ordersListener = null
-        gateway.signOut()
-        state = GadmUiState(loading = false, info = "Sessão encerrada.")
-    }
-
-    fun updateStatus(order: OperationalOrder, target: OrderStatus, note: String = "") {
-        val user = state.currentUser ?: return
-        if (target !in allowedTransitions(order.status)) {
-            state = state.copy(error = "Essa mudança de status não é permitida para ${order.status.label}.")
+    fun changePin(pin: String) {
+        val user = state.user
+        if (user == null) {
+            state = state.copy(message = "Entre novamente para concluir essa ação.")
             return
         }
-        state = state.copy(busy = true, error = null, info = null)
-        gateway.updateStatus(order, target, user, note) { result ->
-            result.fold(
-                onSuccess = { state = state.copy(busy = false, info = "Pedido ${order.code} atualizado para ${target.label}.") },
-                onFailure = { error -> state = state.copy(busy = false, error = error.message ?: "Não foi possível atualizar o pedido.") }
-            )
-        }
+        run("PIN atualizado.") { repository.changePin(user.id, pin) }
     }
 
-    fun assignDriver(order: OperationalOrder, driverName: String, driverId: String) {
-        val user = state.currentUser ?: return
-        if (order.status != OrderStatus.PRONTO && order.status != OrderStatus.AGUARDANDO_ENTREGADOR) {
-            state = state.copy(error = "Só é possível despachar pedido pronto.")
-            return
-        }
-        state = state.copy(busy = true, error = null, info = null)
-        gateway.assignDriver(order, driverName, driverId, user) { result ->
-            result.fold(
-                onSuccess = { state = state.copy(busy = false, info = "Entregador definido para ${order.code}.") },
-                onFailure = { error -> state = state.copy(busy = false, error = error.message ?: "Não foi possível definir o entregador.") }
-            )
-        }
+    fun acceptOrder(order: GadmOrder) = run("Pedido aceito e enviado para preparo.") {
+        repository.acceptAndStartPreparation(order)
     }
 
-    fun setPriority(order: OperationalOrder, priority: Boolean) {
-        val user = state.currentUser ?: return
-        state = state.copy(busy = true, error = null, info = null)
-        gateway.setPriority(order, priority, user) { result ->
-            result.fold(
-                onSuccess = { state = state.copy(busy = false, info = if (priority) "Prioridade ativada." else "Prioridade removida.") },
-                onFailure = { error -> state = state.copy(busy = false, error = error.message ?: "Não foi possível alterar a prioridade.") }
-            )
-        }
+    fun rejectOrder(order: GadmOrder, reason: String) = run("Pedido cancelado.") { repository.cancelOrder(order, reason) }
+
+    fun startKitchen(order: GadmOrder) = run("Pedido enviado para preparo.") {
+        repository.updateOrderStatus(order, statusPedido = "CONFIRMADO", statusProducao = "EM_PREPARO", note = "Preparo iniciado")
     }
 
-    fun clearMessages() {
-        state = state.copy(error = null, info = null)
+    fun finishKitchen(order: GadmOrder) = run("Pedido marcado como pronto.") {
+        repository.updateOrderStatus(order, statusProducao = "PRONTO", note = "Produção finalizada")
     }
 
-    private fun startOrdersListener() {
-        ordersListener?.remove()
-        ordersListener = gateway.listenOrders(
-            onOrders = { orders -> state = state.copy(orders = orders, loading = false, error = null) },
-            onError = { error -> state = state.copy(loading = false, error = error.message ?: "Não foi possível sincronizar pedidos.") }
-        )
+    fun sendToTower(order: GadmOrder) = run("Pedido enviado para a torre.") {
+        repository.updateOrderStatus(order, statusEntrega = "AGUARDANDO_ENTREGADOR", note = "Aguardando atribuição")
     }
 
-    override fun onCleared() {
-        ordersListener?.remove()
-        super.onCleared()
+    fun assignDriver(order: GadmOrder, driver: GadmDriver) = run("Oferta enviada ao entregador.") {
+        repository.assignDriver(order, driver)
     }
 
-    companion object {
-        fun allowedTransitions(status: OrderStatus): List<OrderStatus> = when (status) {
-            OrderStatus.RECEBIDO -> listOf(OrderStatus.CONFIRMADO, OrderStatus.CANCELADO)
-            OrderStatus.CONFIRMADO -> listOf(OrderStatus.EM_PREPARO, OrderStatus.CANCELADO)
-            OrderStatus.EM_PREPARO -> listOf(OrderStatus.PRONTO)
-            OrderStatus.PRONTO -> listOf(OrderStatus.AGUARDANDO_ENTREGADOR)
-            OrderStatus.AGUARDANDO_ENTREGADOR -> listOf(OrderStatus.EM_ROTA)
-            OrderStatus.EM_ROTA -> listOf(OrderStatus.ENTREGUE)
-            OrderStatus.ENTREGUE, OrderStatus.CANCELADO -> emptyList()
+    fun approveDriver(driver: GadmDriver) = run("Entregador aprovado.") { repository.approveDriver(driver) }
+    fun requestDriverCorrection(driver: GadmDriver, reason: String) = run("Correção solicitada ao entregador.") { repository.requestDriverCorrection(driver, reason) }
+    fun blockDriver(driver: GadmDriver, reason: String) = run("Entregador bloqueado.") { repository.setDriverBlocked(driver, true, reason) }
+    fun unblockDriver(driver: GadmDriver) = run("Entregador desbloqueado.") { repository.setDriverBlocked(driver, false) }
+    fun cancelPendingOffer(driver: GadmDriver) = run("Oferta cancelada e entregador liberado.") { repository.cancelPendingOffer(driver) }
+    fun releaseDriver(driver: GadmDriver) = run("Entregador liberado. Pedido, corrida e rota foram limpos.") { repository.releaseDriver(driver) }
+
+    fun resolveIncident(incident: GadmIncident, releaseDriver: Boolean) = run("Ocorrência resolvida.") {
+        repository.resolveIncident(incident, releaseDriver)
+    }
+
+    fun updateOperation(operation: StoreOperation) = run("Operação da loja atualizada.") { repository.updateStoreOperation(operation) }
+    fun toggleProduct(product: GadmProduct, paused: Boolean) = run(if (paused) "Produto pausado." else "Produto liberado.") { repository.toggleProduct(product, paused) }
+
+    fun sendCommunication(title: String, message: String, type: String, action: String) = run("Comunicado enviado ao app do entregador.") {
+        repository.sendGlobalCommunication(title, message, type, action, true)
+    }
+
+    private fun run(success: String, action: suspend () -> Result<Unit>) {
+        viewModelScope.launch {
+            action().onSuccess { state = state.copy(message = success) }
+                .onFailure { state = state.copy(message = it.message ?: "Ação não concluída.") }
         }
     }
 }

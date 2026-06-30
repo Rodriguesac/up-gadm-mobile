@@ -18,8 +18,8 @@ android {
         applicationId = "com.rodriguesacai.gadm"
         minSdk = 23
         targetSdk = 36
-        versionCode = 30000
-        versionName = "3.0.0"
+        versionCode = 30001
+        versionName = "2.0.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
