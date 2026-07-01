@@ -1,455 +1,223 @@
 package com.rodriguesacai.gadm.ui
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalanceWallet
-import androidx.compose.material.icons.filled.Approval
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Assignment
-import androidx.compose.material.icons.filled.Block
-import androidx.compose.material.icons.filled.Campaign
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Dashboard
-import androidx.compose.material.icons.filled.DeliveryDining
-import androidx.compose.material.icons.filled.EditNote
-import androidx.compose.material.icons.filled.ErrorOutline
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.Inventory2
-import androidx.compose.material.icons.filled.Key
-import androidx.compose.material.icons.filled.Kitchen
-import androidx.compose.material.icons.filled.LockOpen
-import androidx.compose.material.icons.filled.MenuBook
-import androidx.compose.material.icons.filled.MoreHoriz
-import androidx.compose.material.icons.filled.NotificationsActive
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PersonAdd
-import androidx.compose.material.icons.filled.PersonOff
-import androidx.compose.material.icons.filled.ReceiptLong
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Restaurant
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.ShoppingBag
-import androidx.compose.material.icons.filled.Store
-import androidx.compose.material.icons.filled.SupportAgent
-import androidx.compose.material.icons.filled.SyncAlt
-import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material.icons.filled.WarningAmber
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.AssistChip
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.rodriguesacai.gadm.AppVersion
-import com.rodriguesacai.gadm.R
-import com.rodriguesacai.gadm.data.GadmCustomer
-import com.rodriguesacai.gadm.data.GadmDriver
-import com.rodriguesacai.gadm.data.GadmIncident
-import com.rodriguesacai.gadm.data.GadmOrder
-import com.rodriguesacai.gadm.data.GadmProduct
-import com.rodriguesacai.gadm.data.StoreOperation
-import com.rodriguesacai.gadm.data.dateTime
-import com.rodriguesacai.gadm.data.money
 
-private enum class GadmPage(val label: String, val icon: ImageVector) {
-    DASHBOARD("Painel", Icons.Filled.Dashboard),
-    ORDERS("Pedidos", Icons.Filled.ShoppingBag),
-    KITCHEN("Cozinha", Icons.Filled.Kitchen),
-    TOWER("Torre", Icons.Filled.DeliveryDining),
-    DRIVERS("Entregadores", Icons.Filled.DeliveryDining),
-    CUSTOMERS("Clientes", Icons.Filled.Group),
-    INCIDENTS("Ocorrências", Icons.Filled.WarningAmber),
-    FINANCE("Financeiro", Icons.Filled.AccountBalanceWallet),
-    CATALOG("Cardápio", Icons.Filled.Inventory2),
-    COMMUNICATIONS("Comunicados", Icons.Filled.Campaign),
-    SETTINGS("Configurações", Icons.Filled.Settings),
-    SECURITY("Segurança", Icons.Filled.Key),
-    MORE("Mais", Icons.Filled.MoreHoriz)
+private enum class AppSection(val label: String, val glyph: String) {
+    DASHBOARD("Início", "⌂"),
+    ORDERS("Pedidos", "▤"),
+    KITCHEN("Cozinha", "⌁"),
+    TOWER("Torre", "⌖"),
+    MORE("Mais", "⋯")
 }
 
-@Composable
-fun UpGestorApp(viewModel: GadmViewModel) {
-    val state = viewModel.state
-    val snackbar = remember { SnackbarHostState() }
-
-    LaunchedEffect(state.message) {
-        state.message?.let {
-            snackbar.showSnackbar(it)
-            viewModel.dismissMessage()
-        }
-    }
-
-    if (state.user == null) {
-        GadmLoginScreen(onLogin = viewModel::login)
-    } else {
-        GadmShell(state = state, viewModel = viewModel, snackbar = snackbar)
-    }
+private enum class OrderStatus(
+    val label: String,
+    val compact: String,
+    val accent: Color,
+    val soft: Color
+) {
+    RECEIVED("Recebido", "Recebidos", GadmBlue, GadmSoftBlue),
+    CONFIRMED("Confirmado", "Confirmados", GadmYellow, GadmSoftOrange),
+    PREPARING("Em preparo", "Em preparo", Color(0xFFFF8B24), GadmSoftOrange),
+    READY("Pronto", "Prontos", GadmSuccess, GadmSoftLime),
+    ON_ROUTE("Em rota", "Em rota", Color(0xFF7D5CE7), Color(0xFFF0EDFF)),
+    FINISHED("Finalizado", "Finalizados", GadmMuted, Color(0xFFF0F2F5)),
+    CANCELED("Cancelado", "Cancelados", GadmDanger, GadmSoftDanger)
 }
 
-@Composable
-private fun GadmLoginScreen(onLogin: (String) -> Unit) {
-    var pin by remember { mutableStateOf("") }
-    Surface(modifier = Modifier.fillMaxSize(), color = GadmNavy) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Surface(
-                shape = RoundedCornerShape(28.dp),
-                color = GadmSurfaceStrong,
-                border = BorderStroke(1.dp, GadmBlue.copy(alpha = .55f))
-            ) {
-                Column(
-                    modifier = Modifier.padding(26.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Surface(
-                        modifier = Modifier.size(88.dp),
-                        shape = CircleShape,
-                        color = GadmNavy
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Filled.Store,
-                                contentDescription = null,
-                                tint = GadmLime,
-                                modifier = Modifier.size(44.dp)
-                            )
-                        }
-                    }
-                    Spacer(Modifier.height(18.dp))
-                    Text("UP GADM", color = GadmWhite, fontSize = 28.sp, fontWeight = FontWeight.Black)
-                    Text("Comando da operação", color = GadmMuted, fontSize = 14.sp)
-                    Spacer(Modifier.height(26.dp))
-                    Text("Acesso administrativo", color = GadmWhite, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = pin,
-                        onValueChange = { if (it.length <= 5 && it.all(Char::isDigit)) pin = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        label = { Text("PIN de 5 números") },
-                        visualTransformation = PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                        colors = appTextFieldColors()
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    PrimaryButton(
-                        text = "ENTRAR NO GESTOR",
-                        icon = Icons.Filled.LockOpen,
-                        enabled = pin.length == 5,
-                        onClick = { onLogin(pin) }
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    Text("Primeiro acesso: PIN 12345. Troque em Segurança assim que entrar.", color = GadmMuted, fontSize = 12.sp)
-                }
-            }
-            Spacer(Modifier.height(20.dp))
-            Text(AppVersion.NAME, color = GadmMuted, fontSize = 12.sp)
-        }
-    }
-}
+private data class Order(
+    val id: Int,
+    val customer: String,
+    val phone: String,
+    val neighborhood: String,
+    val address: String,
+    val time: String,
+    val items: Int,
+    val value: String,
+    val payment: String,
+    val status: OrderStatus,
+    val notes: String,
+    val prepMinutes: Int,
+    val contents: List<String>
+)
 
-@OptIn(ExperimentalMaterial3Api::class)
+private data class Driver(
+    val name: String,
+    val district: String,
+    val distance: String,
+    val vehicle: String,
+    val payment: String,
+    val avatar: String,
+    val available: Boolean = true
+)
+
+private fun initialOrders() = listOf(
+    Order(2847, "Juliana Martins", "(62) 99925-6844", "Vila América", "Rua T-63, 215 · Jardim América", "14:25", 4, "R$ 45,90", "PIX", OrderStatus.RECEIVED, "Sem cebola e sem granola.", 0, listOf("Açaí 700 ml · Morango, banana, granola", "Água mineral 500 ml")),
+    Order(2846, "Lucas Oliveira", "(62) 98123-4567", "Jardim América", "Av. T-9, 443 · Jardim América", "14:24", 2, "R$ 67,80", "Cartão", OrderStatus.CONFIRMED, "Ligar ao chegar na portaria.", 0, listOf("Açaí 700 ml · Leite ninho, morango", "Cupuaçu 500 ml · Granola")),
+    Order(2845, "Larissa Mota", "(62) 99611-2200", "Setor Bueno", "Rua 89, 70 · Setor Bueno", "14:23", 3, "R$ 89,70", "PIX", OrderStatus.PREPARING, "Prioridade: cliente aguardando no local.", 8, listOf("Açaí 1 L · Banana, granola, paçoca", "Açaí 500 ml · Leite em pó")),
+    Order(2844, "Carlos Eduardo", "(62) 99840-2011", "Parque Amazônia", "Rua C-109, 61 · Parque Amazônia", "14:20", 4, "R$ 35,80", "Dinheiro", OrderStatus.READY, "Troco para R$ 50,00.", 0, listOf("Açaí 500 ml · Morango, flocos", "Água mineral 500 ml")),
+    Order(2843, "Renata Silva", "(62) 99003-0090", "Jardim Goiás", "Av. E, 888 · Jardim Goiás", "14:18", 4, "R$ 52,40", "Cartão", OrderStatus.ON_ROUTE, "Entregar pela entrada lateral.", 0, listOf("Açaí 700 ml · Kiwi, leite condensado", "Cupuaçu 300 ml")),
+    Order(2842, "Marcos Vinícius", "(62) 99131-8120", "Alto da Glória", "Rua 12, 131 · Alto da Glória", "14:16", 2, "R$ 31,90", "PIX", OrderStatus.FINISHED, "Pedido entregue sem ocorrência.", 0, listOf("Açaí 500 ml · Paçoca, leite ninho")),
+    Order(2841, "Beatriz Alves", "(62) 99115-0202", "Setor Marista", "Rua 1128, 11 · Marista", "14:12", 3, "R$ 76,50", "Cartão", OrderStatus.READY, "Confirmar interfone 204.", 0, listOf("Açaí 1 L · Nutella, banana", "Açaí 300 ml · Granola")),
+    Order(2840, "Thiago Mendes", "(62) 99212-0010", "Setor Oeste", "Rua 4, 340 · Setor Oeste", "14:08", 5, "R$ 102,60", "Dinheiro", OrderStatus.PREPARING, "Pedido grande para empresa.", 12, listOf("4x Açaí 500 ml variados", "2x Água mineral"))
+)
+
+private fun initialDrivers() = listOf(
+    Driver("Bruno Alves", "Setor Bueno", "1,2 km", "Moto", "Dinheiro · R$ 120,00", "BA"),
+    Driver("Silvia Lima", "Jardim América", "1,8 km", "Moto", "Cartão · Máquina OK", "SL"),
+    Driver("João Santos", "Vila Nova", "2,1 km", "Bicicleta", "Dinheiro · R$ 80,00", "JS"),
+    Driver("Amanda Ferreira", "St. Campinas", "2,4 km", "Moto", "Cartão · Máquina OK", "AF")
+)
+
+/**
+ * Interface operacional completa e navegável. Ela não depende de dados remotos
+ * para abrir: o gestor pode revisar o fluxo com dados locais e o Firebase pode
+ * ser conectado ao repositório sem trocar a camada de interface.
+ */
 @Composable
-private fun GadmShell(state: GadmUiState, viewModel: GadmViewModel, snackbar: SnackbarHostState) {
-    var page by remember { mutableStateOf(GadmPage.DASHBOARD) }
-    val bottomPages = listOf(GadmPage.DASHBOARD, GadmPage.ORDERS, GadmPage.DRIVERS, GadmPage.MORE)
-    val canGoBack = page !in bottomPages
+fun UpGestorApp(firebaseReady: Boolean) {
+    var authenticated by rememberSaveable { mutableStateOf(false) }
+    var activeSectionName by rememberSaveable { mutableStateOf(AppSection.DASHBOARD.name) }
+    var selectedOrderId by remember { mutableStateOf<Int?>(null) }
+    var orders by remember { mutableStateOf(initialOrders()) }
+    var drivers by remember { mutableStateOf(initialDrivers()) }
+    var snackbar by remember { mutableStateOf<String?>(null) }
+
+    val activeSection = AppSection.valueOf(activeSectionName)
+    val updateOrder: (Int, OrderStatus) -> Unit = { id, newStatus ->
+        orders = orders.map { order -> if (order.id == id) order.copy(status = newStatus) else order }
+        snackbar = "Pedido #$id atualizado para ${newStatus.label.lowercase()}."
+    }
+
+    if (!authenticated) {
+        LoginScreen(onEnter = { authenticated = true })
+        return
+    }
+
+    val selected = orders.firstOrNull { it.id == selectedOrderId }
+    if (selected != null) {
+        OrderDetailScreen(
+            order = selected,
+            onBack = { selectedOrderId = null },
+            onStatusChange = { updateOrder(selected.id, it) },
+            onFeedback = { snackbar = it }
+        )
+        return
+    }
 
     Scaffold(
-        containerColor = GadmNavy,
-        snackbarHost = { SnackbarHost(snackbar) },
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(page.label, color = GadmWhite, fontWeight = FontWeight.Black)
-                        if (page == GadmPage.DASHBOARD) {
-                            Text(
-                                if (state.operation.open && state.operation.acceptOrders) "Operação aberta" else "Operação controlada",
-                                color = if (state.operation.open) GadmSuccess else GadmYellow,
-                                fontSize = 11.sp
-                            )
-                        }
-                    }
-                },
-                navigationIcon = {
-                    if (canGoBack) {
-                        IconButton(onClick = { page = GadmPage.DASHBOARD }) {
-                            Icon(Icons.Filled.ArrowBack, null, tint = GadmWhite)
-                        }
-                    }
-                },
-                actions = {
-                    if (page != GadmPage.SECURITY) {
-                        IconButton(onClick = { page = GadmPage.COMMUNICATIONS }) {
-                            Icon(Icons.Filled.NotificationsActive, null, tint = GadmLime)
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = GadmNavy)
-            )
-        },
+        containerColor = GadmSurface,
         bottomBar = {
-            NavigationBar(containerColor = GadmSurfaceStrong) {
-                bottomPages.forEach { item ->
-                    NavigationBarItem(
-                        selected = page == item || (item == GadmPage.MORE && page !in bottomPages),
-                        onClick = { page = item },
-                        icon = { Icon(item.icon, null) },
-                        label = { Text(item.label) },
-                        colors = androidx.compose.material3.NavigationBarItemDefaults.colors(
-                            selectedIconColor = GadmNavy,
-                            selectedTextColor = GadmLime,
-                            indicatorColor = GadmLime,
-                            unselectedIconColor = GadmMuted,
-                            unselectedTextColor = GadmMuted
-                        )
-                    )
-                }
-            }
+            BottomBar(
+                active = activeSection,
+                onNavigate = { activeSectionName = it.name },
+                onQuickAdd = { snackbar = "Novo pedido: cadastro rápido aberto." }
+            )
         }
-    ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-            when (page) {
-                GadmPage.DASHBOARD -> DashboardScreen(state, onNavigate = { page = it })
-                GadmPage.ORDERS -> OrdersScreen(state, viewModel, onNavigate = { page = it })
-                GadmPage.KITCHEN -> KitchenScreen(state, viewModel)
-                GadmPage.TOWER -> TowerScreen(state, viewModel)
-                GadmPage.DRIVERS -> DriversScreen(state, viewModel)
-                GadmPage.CUSTOMERS -> CustomersScreen(state)
-                GadmPage.INCIDENTS -> IncidentsScreen(state, viewModel)
-                GadmPage.FINANCE -> FinanceScreen(state)
-                GadmPage.CATALOG -> CatalogScreen(state, viewModel)
-                GadmPage.COMMUNICATIONS -> CommunicationsScreen(viewModel)
-                GadmPage.SETTINGS -> SettingsScreen(state.operation, viewModel)
-                GadmPage.SECURITY -> SecurityScreen(state, viewModel)
-                GadmPage.MORE -> MoreScreen(onNavigate = { page = it }, onLogout = viewModel::logout)
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun DashboardScreen(state: GadmUiState, onNavigate: (GadmPage) -> Unit) {
-    val newOrders = state.orders.count { it.currentStage == "Novo" }
-    val preparing = state.orders.count { it.currentStage == "Em preparo" }
-    val delivery = state.orders.count { it.currentStage == "Em entrega" }
-    val availableDrivers = state.drivers.count { it.availabilityLabel == "Disponível" }
-    val pendingOffers = state.drivers.count { it.availabilityLabel == "Oferta enviada" }
-    val activeIncidents = state.incidents.count { !it.status.equals("RESOLVIDA", true) && !it.status.equals("CANCELADA", true) }
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        item {
-            OperationBanner(operation = state.operation, onClick = { onNavigate(GadmPage.SETTINGS) })
-        }
-        item {
-            Text("Visão da operação", color = GadmWhite, fontWeight = FontWeight.Black, fontSize = 19.sp)
-        }
-        item {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                SummaryTile("Novos pedidos", newOrders.toString(), Icons.Filled.ReceiptLong, GadmLime) { onNavigate(GadmPage.ORDERS) }
-                SummaryTile("Em preparo", preparing.toString(), Icons.Filled.Kitchen, GadmBlue) { onNavigate(GadmPage.KITCHEN) }
-                SummaryTile("Em entrega", delivery.toString(), Icons.Filled.DeliveryDining, GadmYellow) { onNavigate(GadmPage.TOWER) }
-                SummaryTile("Disponíveis", availableDrivers.toString(), Icons.Filled.Person, GadmSuccess) { onNavigate(GadmPage.DRIVERS) }
-                SummaryTile("Ofertas", pendingOffers.toString(), Icons.Filled.NotificationsActive, GadmYellow) { onNavigate(GadmPage.DRIVERS) }
-            }
-        }
-        if (activeIncidents > 0) {
-            item {
-                AlertRow(
-                    title = "$activeIncidents ocorrência${if (activeIncidents > 1) "s" else ""} precisa${if (activeIncidents > 1) "m" else ""} de decisão",
-                    subtitle = "Resolva, cancele ou libere o entregador sem deixar corrida presa.",
-                    onClick = { onNavigate(GadmPage.INCIDENTS) }
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            when (activeSection) {
+                AppSection.DASHBOARD -> DashboardScreen(
+                    orders = orders,
+                    firebaseReady = firebaseReady,
+                    onOpenOrders = { activeSectionName = AppSection.ORDERS.name },
+                    onOpenKitchen = { activeSectionName = AppSection.KITCHEN.name },
+                    onOpenTower = { activeSectionName = AppSection.TOWER.name },
+                    onOpenOrder = { selectedOrderId = it }
+                )
+                AppSection.ORDERS -> OrdersScreen(
+                    orders = orders,
+                    onOpen = { selectedOrderId = it },
+                    onQuickAction = { id, status -> updateOrder(id, status) }
+                )
+                AppSection.KITCHEN -> KitchenScreen(
+                    orders = orders,
+                    onOpen = { selectedOrderId = it },
+                    onStatusChange = updateOrder
+                )
+                AppSection.TOWER -> TowerScreen(
+                    orders = orders,
+                    drivers = drivers,
+                    onOpen = { selectedOrderId = it },
+                    onAssign = { driver, order ->
+                        drivers = drivers.map { if (it.name == driver.name) it.copy(available = false) else it }
+                        updateOrder(order.id, OrderStatus.ON_ROUTE)
+                        snackbar = "${driver.name} recebeu o pedido #${order.id}."
+                    }
+                )
+                AppSection.MORE -> OperationsScreen(
+                    firebaseReady = firebaseReady,
+                    onAction = { snackbar = it }
                 )
             }
-        }
-        item { Text("Ações rápidas", color = GadmWhite, fontWeight = FontWeight.Black, fontSize = 19.sp) }
-        item {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                QuickAction("Pedidos", "Aceitar e preparar", Icons.Filled.ShoppingBag) { onNavigate(GadmPage.ORDERS) }
-                QuickAction("Cozinha", "Iniciar e finalizar", Icons.Filled.Kitchen) { onNavigate(GadmPage.KITCHEN) }
-                QuickAction("Torre", "Enviar corrida", Icons.Filled.SyncAlt) { onNavigate(GadmPage.TOWER) }
-                QuickAction("Entregadores", "Aprovar e liberar", Icons.Filled.Approval) { onNavigate(GadmPage.DRIVERS) }
-                QuickAction("Clientes", "Dados e pedidos", Icons.Filled.Group) { onNavigate(GadmPage.CUSTOMERS) }
-                QuickAction("Comunicados", "Controlar app", Icons.Filled.Campaign) { onNavigate(GadmPage.COMMUNICATIONS) }
-            }
-        }
-        item { Text("Fila ao vivo", color = GadmWhite, fontWeight = FontWeight.Black, fontSize = 19.sp) }
-        if (state.orders.isEmpty()) {
-            item { EmptyCard("Ainda não há pedidos no Firebase.", "Quando o Cliente criar um pedido ele aparecerá aqui em tempo real.") }
-        } else {
-            items(state.orders.sortedByDescending { it.createdAt }.take(5), key = { it.id }) { order ->
-                CompactOrderCard(order, onClick = { onNavigate(GadmPage.ORDERS) })
-            }
-        }
-    }
-}
 
-@Composable
-private fun OrdersScreen(state: GadmUiState, viewModel: GadmViewModel, onNavigate: (GadmPage) -> Unit) {
-    var filter by remember { mutableStateOf("Todos") }
-    var selected by remember { mutableStateOf<GadmOrder?>(null) }
-    val options = listOf("Todos", "Novos", "Em preparo", "Pronto", "Na torre", "Em entrega", "Cancelado")
-    val list = state.orders.filter { filter == "Todos" || it.currentStage == filter }
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
-            Text("Pedidos em tempo real", color = GadmMuted, fontSize = 14.sp)
-            Spacer(Modifier.height(10.dp))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                options.forEach { option ->
-                    FilterChip(selected = filter == option, onClick = { filter = option }, label = { Text(option) })
-                }
-            }
-        }
-        if (list.isEmpty()) {
-            item { EmptyCard("Nenhum pedido nesta fila.", "Use os filtros acima para navegar pelos status.") }
-        } else {
-            items(list.sortedByDescending { it.createdAt }, key = { it.id }) { order ->
-                OrderCard(order = order, onClick = { selected = order }, onPrimary = {
-                    when (order.currentStage) {
-                        "Novo" -> viewModel.acceptOrder(order)
-                        "Em preparo" -> viewModel.finishKitchen(order)
-                        "Pronto" -> viewModel.sendToTower(order)
-                        "Na torre" -> onNavigate(GadmPage.TOWER)
-                        else -> selected = order
-                    }
-                })
-            }
-        }
-    }
-    selected?.let { order ->
-        OrderDetailDialog(
-            order = order,
-            onDismiss = { selected = null },
-            onAccept = { viewModel.acceptOrder(order); selected = null },
-            onStartKitchen = { viewModel.startKitchen(order); selected = null },
-            onFinishKitchen = { viewModel.finishKitchen(order); selected = null },
-            onTower = { viewModel.sendToTower(order); selected = null; onNavigate(GadmPage.TOWER) },
-            onCancel = { reason -> viewModel.rejectOrder(order, reason); selected = null }
-        )
-    }
-}
-
-@Composable
-private fun KitchenScreen(state: GadmUiState, viewModel: GadmViewModel) {
-    val kitchenOrders = state.orders.filter { it.currentStage in setOf("Novo", "Em preparo", "Pronto") && !it.orderStatus.equals("CANCELADO", true) }
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
-            AppCard {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.Kitchen, null, tint = GadmLime)
-                    Spacer(Modifier.width(12.dp))
-                    Column {
-                        Text("Produção", color = GadmWhite, fontWeight = FontWeight.Black)
-                        Text("Inicie somente pedidos confirmados e marque pronto ao finalizar.", color = GadmMuted, fontSize = 13.sp)
-                    }
-                }
-            }
-        }
-        if (kitchenOrders.isEmpty()) item { EmptyCard("Cozinha livre.", "Pedidos confirmados aparecerão aqui automaticamente.") }
-        items(kitchenOrders.sortedByDescending { it.createdAt }, key = { it.id }) { order ->
-            AppCard {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(order.code, color = GadmWhite, fontWeight = FontWeight.Black, fontSize = 17.sp)
-                        Text(order.customerName, color = GadmMuted, fontSize = 13.sp)
-                        Spacer(Modifier.height(6.dp))
-                        Text(order.itemsLabel, color = GadmWhite, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    }
-                    StatusPill(order.currentStage)
-                }
-                Spacer(Modifier.height(12.dp))
-                when (order.currentStage) {
-                    "Novo" -> PrimaryButton("ACEITAR E INICIAR PREPARO", Icons.Filled.Approval) { viewModel.acceptOrder(order) }
-                    "Em preparo" -> PrimaryButton("MARCAR COMO PRONTO", Icons.Filled.Restaurant) { viewModel.finishKitchen(order) }
-                    "Pronto" -> SecondaryButton("ENVIAR PARA TORRE", Icons.Filled.DeliveryDining) { viewModel.sendToTower(order) }
-                    else -> PrimaryButton("INICIAR PREPARO", Icons.Filled.Kitchen) { viewModel.startKitchen(order) }
+            snackbar?.let { message ->
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 8.dp, start = 16.dp, end = 16.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(GadmNavy)
+                        .clickable { snackbar = null }
+                        .padding(horizontal = 14.dp, vertical = 10.dp)
+                ) {
+                    Text(message, color = GadmWhite, fontSize = 12.sp, textAlign = TextAlign.Center)
                 }
             }
         }
@@ -457,811 +225,1085 @@ private fun KitchenScreen(state: GadmUiState, viewModel: GadmViewModel) {
 }
 
 @Composable
-private fun TowerScreen(state: GadmUiState, viewModel: GadmViewModel) {
-    var selectedOrder by remember { mutableStateOf<GadmOrder?>(null) }
-    val readyOrders = state.orders.filter { it.currentStage == "Pronto" || it.currentStage == "Na torre" }
-    val eligibleDrivers = state.drivers.filter {
-        it.approved && !it.blocked &&
-            it.currentOrderId.isBlank() && it.currentRideId.isBlank() &&
-            it.pendingOfferOrderId.isBlank() && it.pendingOfferRideId.isBlank()
-    }
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+private fun LoginScreen(onEnter: () -> Unit) {
+    var cpf by rememberSaveable { mutableStateOf("") }
+    var password by rememberSaveable { mutableStateOf("") }
+    var rememberData by rememberSaveable { mutableStateOf(true) }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(GadmSurface)
+            .verticalScroll(rememberScrollState())
+            .statusBarsPadding()
+            .padding(horizontal = 24.dp, vertical = 22.dp),
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        item {
-            AppCard {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.SyncAlt, null, tint = GadmLime)
-                    Spacer(Modifier.width(12.dp))
-                    Column {
-                        Text("Torre de despacho", color = GadmWhite, fontWeight = FontWeight.Black)
-                        Text("${eligibleDrivers.size} entregador(es) apto(s) sem corrida ativa.", color = GadmMuted, fontSize = 13.sp)
-                    }
-                }
-            }
-        }
-        if (readyOrders.isEmpty()) item { EmptyCard("Nenhum pedido aguardando despacho.", "Pedidos prontos ou enviados para a torre aparecerão aqui.") }
-        items(readyOrders, key = { it.id }) { order ->
-            AppCard {
-                Text(order.code, color = GadmWhite, fontWeight = FontWeight.Black, fontSize = 18.sp)
-                Text(order.customerName, color = GadmMuted, fontSize = 13.sp)
-                Spacer(Modifier.height(8.dp))
-                Text(order.address.ifBlank { "Endereço não informado" }, color = GadmWhite, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                Spacer(Modifier.height(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    StatusPill(order.currentStage)
-                    StatusPill(money(order.total), accent = GadmYellow)
-                }
-                Spacer(Modifier.height(12.dp))
-                PrimaryButton("ESCOLHER ENTREGADOR", Icons.Filled.DeliveryDining, enabled = eligibleDrivers.isNotEmpty()) { selectedOrder = order }
-            }
-        }
-    }
-    selectedOrder?.let { order ->
-        AssignDriverDialog(order = order, drivers = eligibleDrivers, onDismiss = { selectedOrder = null }) { driver ->
-            viewModel.assignDriver(order, driver)
-            selectedOrder = null
-        }
-    }
-}
-
-@Composable
-private fun DriversScreen(state: GadmUiState, viewModel: GadmViewModel) {
-    var filter by remember { mutableStateOf("Todos") }
-    var selected by remember { mutableStateOf<GadmDriver?>(null) }
-    val options = listOf("Todos", "Em análise", "Disponível", "Oferta enviada", "Em corrida", "Bloqueado", "Offline")
-    val drivers = state.drivers.filter { filter == "Todos" || it.availabilityLabel == filter }
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
-            Text("Cadastros, documentos e operação", color = GadmMuted, fontSize = 14.sp)
-            Spacer(Modifier.height(8.dp))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                options.forEach { option -> FilterChip(selected = filter == option, onClick = { filter = option }, label = { Text(option) }) }
-            }
-        }
-        if (drivers.isEmpty()) item { EmptyCard("Nenhum entregador nesta fila.", "Cadastros aprovados e em análise aparecerão aqui.") }
-        items(drivers.sortedByDescending { it.createdAt }, key = { it.id }) { driver ->
-            DriverCard(driver, onClick = { selected = driver })
-        }
-    }
-    selected?.let { driver ->
-        DriverDetailDialog(
-            driver = driver,
-            onDismiss = { selected = null },
-            onApprove = { viewModel.approveDriver(driver); selected = null },
-            onCorrection = { reason -> viewModel.requestDriverCorrection(driver, reason); selected = null },
-            onBlock = { reason -> viewModel.blockDriver(driver, reason); selected = null },
-            onUnblock = { viewModel.unblockDriver(driver); selected = null },
-            onCancelOffer = { viewModel.cancelPendingOffer(driver); selected = null },
-            onRelease = { viewModel.releaseDriver(driver); selected = null }
-        )
-    }
-}
-
-@Composable
-private fun CustomersScreen(state: GadmUiState) {
-    var search by remember { mutableStateOf("") }
-    val list = state.customers.filter { it.name.contains(search, true) || it.phone.contains(search) }
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
-            OutlinedTextField(value = search, onValueChange = { search = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Buscar cliente por nome ou telefone") }, singleLine = true, colors = appTextFieldColors())
-        }
-        if (list.isEmpty()) item { EmptyCard("Nenhum cliente encontrado.", "Os clientes do app/site aparecem nesta lista quando gravados em /clientes.") }
-        items(list.sortedByDescending { it.lastOrderAt }, key = { it.id }) { customer -> CustomerCard(customer) }
-    }
-}
-
-@Composable
-private fun IncidentsScreen(state: GadmUiState, viewModel: GadmViewModel) {
-    var selected by remember { mutableStateOf<GadmIncident?>(null) }
-    val incidents = state.incidents.filter { !it.status.equals("RESOLVIDA", true) && !it.status.equals("CANCELADA", true) }
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
-            AlertRow("Ocorrência não é corrida ativa", "Ao resolver, o GADM pode liberar o entregador e limpar vínculos presos.", onClick = {})
-        }
-        if (incidents.isEmpty()) item { EmptyCard("Nenhuma ocorrência aberta.", "As ocorrências que chegarem do app entregador aparecerão aqui.") }
-        items(incidents.sortedByDescending { it.createdAt }, key = { it.id }) { incident ->
-            IncidentCard(incident, onClick = { selected = incident })
-        }
-    }
-    selected?.let { incident ->
-        IncidentDetailDialog(incident, onDismiss = { selected = null }) { release ->
-            viewModel.resolveIncident(incident, release)
-            selected = null
-        }
-    }
-}
-
-@Composable
-private fun FinanceScreen(state: GadmUiState) {
-    val income = state.finance.filter { it.type.uppercase() in setOf("ENTRADA", "RECEITA", "PEDIDO") }.sumOf { it.amount }
-    val payout = state.finance.filter { it.type.uppercase() in setOf("REPASSE", "SAIDA", "PAGAMENTO") }.sumOf { it.amount }
-    val pending = state.finance.filter { it.status.equals("PENDENTE", true) }.sumOf { it.amount }
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
-            AppCard {
-                Text("Financeiro operacional", color = GadmWhite, fontWeight = FontWeight.Black, fontSize = 18.sp)
-                Spacer(Modifier.height(8.dp))
-                Text("Taxa de entrega do cliente e repasse do entregador são campos separados.", color = GadmMuted, fontSize = 13.sp)
-            }
-        }
-        item {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                SummaryTile("Entradas", money(income), Icons.Filled.ReceiptLong, GadmSuccess) {}
-                SummaryTile("Repasses", money(payout), Icons.Filled.AccountBalanceWallet, GadmYellow) {}
-                SummaryTile("Pendentes", money(pending), Icons.Filled.WarningAmber, GadmDanger) {}
-            }
-        }
-        item { Text("Movimentos recentes", color = GadmWhite, fontWeight = FontWeight.Black, fontSize = 19.sp) }
-        if (state.finance.isEmpty()) item { EmptyCard("Ainda não há movimentos financeiros.", "Registros em /financeiro_movimentos aparecerão aqui.") }
-        items(state.finance.sortedByDescending { it.createdAt }.take(50), key = { it.id }) { entry ->
-            AppCard {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(entry.description, color = GadmWhite, fontWeight = FontWeight.Bold)
-                        Text("${entry.type} • ${dateTime(entry.createdAt)}", color = GadmMuted, fontSize = 12.sp)
-                    }
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(money(entry.amount), color = if (entry.type.uppercase() in setOf("SAIDA", "REPASSE")) GadmYellow else GadmSuccess, fontWeight = FontWeight.Black)
-                        StatusPill(entry.status)
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CatalogScreen(state: GadmUiState, viewModel: GadmViewModel) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
-            AppCard {
-                Text("Cardápio e estoque", color = GadmWhite, fontWeight = FontWeight.Black, fontSize = 18.sp)
-                Text("Pause itens sem apagar seu histórico de vendas.", color = GadmMuted, fontSize = 13.sp)
-            }
-        }
-        if (state.products.isEmpty()) item { EmptyCard("Nenhum produto sincronizado.", "Produtos em /produtos aparecerão aqui para pausar ou liberar.") }
-        items(state.products.sortedBy { it.name }, key = { it.id }) { product ->
-            ProductCard(product, onToggle = { viewModel.toggleProduct(product, !product.paused) })
-        }
-    }
-}
-
-@Composable
-private fun CommunicationsScreen(viewModel: GadmViewModel) {
-    var title by remember { mutableStateOf("") }
-    var body by remember { mutableStateOf("") }
-    var type by remember { mutableStateOf("COMUNICADO") }
-    var action by remember { mutableStateOf("NOTIFICACOES") }
-    val types = listOf("COMUNICADO", "PROMOCAO", "ALERTA", "MANUTENCAO")
-    val actions = listOf("NOTIFICACOES", "COMPLETAR_CADASTRO", "ATIVAR_MAQUININHA", "CADASTRAR_PIX", "CARTEIRA", "SUPORTE")
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
-            AppCard {
-                Text("Comando do app entregador", color = GadmWhite, fontWeight = FontWeight.Black, fontSize = 18.sp)
-                Text("O comunicado aparece no app e pode levar o entregador para a área certa.", color = GadmMuted, fontSize = 13.sp)
-            }
-        }
-        item { OutlinedTextField(value = title, onValueChange = { title = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Título") }, singleLine = true, colors = appTextFieldColors()) }
-        item { OutlinedTextField(value = body, onValueChange = { body = it }, modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp), label = { Text("Mensagem") }, colors = appTextFieldColors()) }
-        item {
-            Text("Tipo", color = GadmWhite, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(8.dp))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                types.forEach { option -> FilterChip(selected = type == option, onClick = { type = option }, label = { Text(option.lowercase().replaceFirstChar { it.uppercase() }) }) }
-            }
-        }
-        item {
-            Text("Ação ao tocar", color = GadmWhite, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(8.dp))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                actions.forEach { option -> FilterChip(selected = action == option, onClick = { action = option }, label = { Text(option.lowercase().replace('_', ' ').replaceFirstChar { it.uppercase() }) }) }
-            }
-        }
-        item {
-            PrimaryButton("ENVIAR COMUNICADO", Icons.Filled.Campaign, enabled = title.isNotBlank() && body.isNotBlank()) {
-                viewModel.sendCommunication(title.trim(), body.trim(), type, action)
-                title = ""
-                body = ""
-            }
-        }
-    }
-}
-
-@Composable
-private fun SettingsScreen(operation: StoreOperation, viewModel: GadmViewModel) {
-    var open by remember(operation) { mutableStateOf(operation.open) }
-    var accept by remember(operation) { mutableStateOf(operation.acceptOrders) }
-    var maintenance by remember(operation) { mutableStateOf(operation.maintenance) }
-    var minutes by remember(operation) { mutableStateOf(operation.estimatedMinutes.toString()) }
-    var message by remember(operation) { mutableStateOf(operation.message) }
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
-            AppCard {
-                Text("Operação da loja", color = GadmWhite, fontWeight = FontWeight.Black, fontSize = 18.sp)
-                Text("Estas chaves são o controle operacional central do GADM.", color = GadmMuted, fontSize = 13.sp)
-            }
-        }
-        item { SwitchRow("Loja aberta", "Permite o atendimento geral.", open) { open = it } }
-        item { SwitchRow("Aceitar pedidos", "Cliente pode concluir novos pedidos.", accept) { accept = it } }
-        item { SwitchRow("Modo manutenção", "Exibe aviso e bloqueia fluxos definidos pela loja.", maintenance) { maintenance = it } }
-        item { OutlinedTextField(value = minutes, onValueChange = { minutes = it.filter(Char::isDigit) }, modifier = Modifier.fillMaxWidth(), label = { Text("Tempo estimado em minutos") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = appTextFieldColors()) }
-        item { OutlinedTextField(value = message, onValueChange = { message = it }, modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp), label = { Text("Mensagem operacional") }, colors = appTextFieldColors()) }
-        item {
-            PrimaryButton("SALVAR OPERAÇÃO", Icons.Filled.Settings) {
-                viewModel.updateOperation(StoreOperation(open, accept, maintenance, message, minutes.toIntOrNull() ?: 45))
-            }
-        }
-    }
-}
-
-@Composable
-private fun SecurityScreen(state: GadmUiState, viewModel: GadmViewModel) {
-    var pin by remember { mutableStateOf("") }
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
-            AppCard {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.Key, null, tint = GadmLime)
-                    Spacer(Modifier.width(12.dp))
-                    Column {
-                        Text("Segurança do gestor", color = GadmWhite, fontWeight = FontWeight.Black)
-                        Text("Acesso atual: ${state.user?.name ?: "Gestor"} • ${state.user?.role ?: "ADMIN"}", color = GadmMuted, fontSize = 13.sp)
-                    }
-                }
-            }
-        }
-        item { Text("Trocar PIN administrativo", color = GadmWhite, fontWeight = FontWeight.Bold) }
-        item { OutlinedTextField(value = pin, onValueChange = { value -> if (value.length <= 5 && value.all(Char::isDigit)) pin = value }, modifier = Modifier.fillMaxWidth(), label = { Text("Novo PIN com 5 números") }, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword), singleLine = true, colors = appTextFieldColors()) }
-        item { PrimaryButton("ATUALIZAR PIN", Icons.Filled.Key, enabled = pin.length == 5) { viewModel.changePin(pin); pin = "" } }
-        item { EmptyCard("Controle de equipe", "Os próximos usuários administrativos são cadastrados em /usuarios_gadm com nome, perfil, ativo e pinHash.") }
-    }
-}
-
-@Composable
-private fun MoreScreen(onNavigate: (GadmPage) -> Unit, onLogout: () -> Unit) {
-    val entries = listOf(
-        Triple("Cozinha", "Produção, tempos e fila", GadmPage.KITCHEN),
-        Triple("Torre de despacho", "Atribuir pedido a entregador", GadmPage.TOWER),
-        Triple("Clientes", "Dados e histórico", GadmPage.CUSTOMERS),
-        Triple("Ocorrências", "Resolver e liberar", GadmPage.INCIDENTS),
-        Triple("Financeiro", "Movimentos e repasses", GadmPage.FINANCE),
-        Triple("Cardápio e estoque", "Pausar produtos", GadmPage.CATALOG),
-        Triple("Comunicados", "Controlar o app entregador", GadmPage.COMMUNICATIONS),
-        Triple("Configurações", "Loja, pedidos e manutenção", GadmPage.SETTINGS),
-        Triple("Segurança", "Trocar PIN administrativo", GadmPage.SECURITY)
-    )
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        items(entries) { (title, subtitle, target) ->
-            MenuRow(title, subtitle, target.icon) { onNavigate(target) }
-        }
-        item {
-            Spacer(Modifier.height(8.dp))
-            OutlinedButton(onClick = onLogout, modifier = Modifier.fillMaxWidth(), border = BorderStroke(1.dp, GadmDanger.copy(alpha = .8f))) {
-                Icon(Icons.Filled.PersonOff, null, tint = GadmDanger)
-                Spacer(Modifier.width(8.dp))
-                Text("SAIR DO GESTOR", color = GadmDanger, fontWeight = FontWeight.Black)
-            }
-        }
-    }
-}
-
-@Composable
-private fun OperationBanner(operation: StoreOperation, onClick: () -> Unit) {
-    val active = operation.open && operation.acceptOrders && !operation.maintenance
-    AppCard(onClick = onClick, borderColor = if (active) GadmLime.copy(alpha = .48f) else GadmYellow.copy(alpha = .55f)) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                Surface(shape = CircleShape, color = if (active) GadmLime else GadmYellow, modifier = Modifier.size(42.dp)) {
-                    Box(contentAlignment = Alignment.Center) { Icon(if (active) Icons.Filled.Store else Icons.Filled.WarningAmber, null, tint = GadmNavy) }
+        Column {
+            Spacer(Modifier.height(34.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(58.dp)
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(GadmLime),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("G", color = GadmNavy, fontWeight = FontWeight.Black, fontSize = 34.sp)
                 }
                 Spacer(Modifier.width(12.dp))
                 Column {
-                    Text(if (active) "Loja aberta e recebendo pedidos" else "Operação precisa de atenção", color = GadmWhite, fontWeight = FontWeight.Black)
-                    Text(operation.message.ifBlank { "Tempo estimado: ${operation.estimatedMinutes} min" }, color = GadmMuted, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text("GADM", color = GadmNavy, fontWeight = FontWeight.ExtraBold, fontSize = 30.sp, letterSpacing = 1.sp)
+                    Text("MOBILE", color = GadmLime, fontWeight = FontWeight.Bold, fontSize = 14.sp, letterSpacing = 3.sp)
                 }
             }
-            Icon(Icons.Filled.ChevronRight, null, tint = GadmMuted)
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun SummaryTile(title: String, value: String, icon: ImageVector, tint: Color, onClick: () -> Unit) {
-    AppCard(
-        modifier = Modifier.width(164.dp),
-        onClick = onClick,
-        borderColor = tint.copy(alpha = .26f)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Surface(shape = RoundedCornerShape(12.dp), color = tint.copy(alpha = .17f), modifier = Modifier.size(38.dp)) {
-                Box(contentAlignment = Alignment.Center) { Icon(icon, null, tint = tint, modifier = Modifier.size(21.dp)) }
-            }
-            Spacer(Modifier.width(10.dp))
-            Column {
-                Text(value, color = GadmWhite, fontSize = 20.sp, fontWeight = FontWeight.Black, maxLines = 1)
-                Text(title, color = GadmMuted, fontSize = 12.sp, maxLines = 1)
-            }
-        }
-    }
-}
-
-@Composable
-private fun QuickAction(title: String, subtitle: String, icon: ImageVector, onClick: () -> Unit) {
-    AppCard(modifier = Modifier.width(166.dp), onClick = onClick) {
-        Surface(shape = RoundedCornerShape(14.dp), color = GadmBlue.copy(alpha = .18f), modifier = Modifier.size(42.dp)) {
-            Box(contentAlignment = Alignment.Center) { Icon(icon, null, tint = GadmLime) }
-        }
-        Spacer(Modifier.height(10.dp))
-        Text(title, color = GadmWhite, fontWeight = FontWeight.Black, maxLines = 1)
-        Text(subtitle, color = GadmMuted, fontSize = 12.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-    }
-}
-
-@Composable
-private fun CompactOrderCard(order: GadmOrder, onClick: () -> Unit) {
-    AppCard(onClick = onClick) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(order.code, color = GadmWhite, fontWeight = FontWeight.Black)
-                Text(order.customerName, color = GadmMuted, fontSize = 13.sp)
-                Text(order.address.ifBlank { "Endereço não informado" }, color = GadmMuted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                StatusPill(order.currentStage)
-                Spacer(Modifier.height(6.dp))
-                Text(money(order.total), color = GadmLime, fontWeight = FontWeight.Black)
-            }
-        }
-    }
-}
-
-@Composable
-private fun OrderCard(order: GadmOrder, onClick: () -> Unit, onPrimary: () -> Unit) {
-    AppCard(onClick = onClick, borderColor = if (order.priority) GadmYellow.copy(alpha = .75f) else null) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(order.code, color = GadmWhite, fontWeight = FontWeight.Black, fontSize = 18.sp)
-                    if (order.priority) {
-                        Spacer(Modifier.width(8.dp)); StatusPill("Prioridade", accent = GadmYellow)
-                    }
+            Spacer(Modifier.height(24.dp))
+            Text("Gestão inteligente para o seu delivery", color = GadmMuted, fontSize = 15.sp, lineHeight = 21.sp)
+            Spacer(Modifier.height(42.dp))
+            Text("ACESSO ADMINISTRATIVO", color = GadmMuted, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            Spacer(Modifier.height(16.dp))
+            LoginField(label = "CPF", value = cpf, placeholder = "000.000.000-00", glyph = "♙", onChange = { cpf = it })
+            Spacer(Modifier.height(14.dp))
+            LoginField(label = "SENHA", value = password, placeholder = "Digite sua senha", glyph = "◉", onChange = { password = it })
+            Spacer(Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    modifier = Modifier.clickable { rememberData = !rememberData },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(18.dp)
+                            .clip(RoundedCornerShape(5.dp))
+                            .background(if (rememberData) GadmLime else GadmWhite)
+                            .border(1.dp, if (rememberData) GadmLime else GadmBorder, RoundedCornerShape(5.dp)),
+                        contentAlignment = Alignment.Center
+                    ) { if (rememberData) Text("✓", color = GadmNavy, fontSize = 13.sp, fontWeight = FontWeight.Bold) }
+                    Spacer(Modifier.width(8.dp))
+                    Text("Lembrar meus dados", color = GadmMuted, fontSize = 12.sp)
                 }
-                Text(order.customerName, color = GadmMuted, fontSize = 13.sp)
-                Spacer(Modifier.height(6.dp))
-                Text(order.itemsLabel, color = GadmWhite, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text("Esqueci minha senha", color = GadmBlue, fontSize = 12.sp, modifier = Modifier.clickable { })
             }
-            Column(horizontalAlignment = Alignment.End) {
-                StatusPill(order.currentStage)
-                Spacer(Modifier.height(7.dp))
-                Text(money(order.total), color = GadmLime, fontWeight = FontWeight.Black)
+            Spacer(Modifier.height(24.dp))
+            PrimaryButton(text = "ENTRAR", onClick = onEnter)
+            Spacer(Modifier.height(24.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Divider(modifier = Modifier.weight(1f), color = GadmBorder)
+                Text("  ou  ", color = GadmMuted, fontSize = 12.sp)
+                Divider(modifier = Modifier.weight(1f), color = GadmBorder)
             }
+            Spacer(Modifier.height(18.dp))
+            OutlineAction(text = "Entrar com biometria", glyph = "◌", onClick = onEnter)
         }
-        Spacer(Modifier.height(10.dp))
-        HorizontalDivider(color = GadmMuted.copy(alpha = .18f))
-        Spacer(Modifier.height(10.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("${order.payment} • ${dateTime(order.createdAt)}", color = GadmMuted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-            TextButton(onClick = onPrimary) {
-                Text(orderPrimaryText(order), color = GadmLime, fontWeight = FontWeight.Black, fontSize = 12.sp)
-            }
-        }
-    }
-}
-
-private fun orderPrimaryText(order: GadmOrder): String = when (order.currentStage) {
-    "Novo" -> "ACEITAR + PREPARAR"
-    "Em preparo" -> "PRONTO"
-    "Pronto" -> "TORRE"
-    "Na torre" -> "DESPACHAR"
-    else -> "DETALHES"
-}
-
-@Composable
-private fun DriverCard(driver: GadmDriver, onClick: () -> Unit) {
-    AppCard(onClick = onClick, borderColor = when { driver.blocked -> GadmDanger.copy(alpha = .62f); !driver.approved -> GadmYellow.copy(alpha = .58f); else -> null }) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-            Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-                Surface(modifier = Modifier.size(46.dp), shape = CircleShape, color = GadmBlue.copy(alpha = .22f)) {
-                    Box(contentAlignment = Alignment.Center) { Text(driver.name.take(1).uppercase(), color = GadmLime, fontWeight = FontWeight.Black, fontSize = 19.sp) }
-                }
-                Spacer(Modifier.width(11.dp))
-                Column {
-                    Text(driver.name, color = GadmWhite, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(listOf(driver.vehicle, driver.plate).filter { it.isNotBlank() }.joinToString(" • ").ifBlank { driver.phone }, color = GadmMuted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-            }
-            StatusPill(driver.availabilityLabel, accent = driverStatusColor(driver))
-        }
-        Spacer(Modifier.height(10.dp))
-        Text(if (driver.currentOrderId.isNotBlank()) "Pedido atual: ${driver.currentOrderId}" else "Toque para abrir os comandos", color = GadmMuted, fontSize = 12.sp)
+        Text("Versão 2.2.0 · Admin Premium", color = GadmMuted, fontSize = 11.sp, modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 36.dp))
     }
 }
 
 @Composable
-private fun CustomerCard(customer: GadmCustomer) {
-    AppCard {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(customer.name, color = GadmWhite, fontWeight = FontWeight.Black)
-                Text(customer.phone.ifBlank { customer.email.ifBlank { "Sem contato registrado" } }, color = GadmMuted, fontSize = 13.sp)
-                if (customer.address.isNotBlank()) Text(customer.address, color = GadmMuted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                Text("${customer.ordersCount} pedidos", color = GadmLime, fontWeight = FontWeight.Black, fontSize = 12.sp)
-                Text(money(customer.totalSpent), color = GadmWhite, fontSize = 13.sp)
-            }
-        }
+private fun LoginField(label: String, value: String, placeholder: String, glyph: String, onChange: (String) -> Unit) {
+    Column {
+        Text(label, color = GadmMuted, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+        Spacer(Modifier.height(7.dp))
+        OutlinedTextField(
+            value = value,
+            onValueChange = onChange,
+            placeholder = { Text(placeholder, color = GadmMuted, fontSize = 14.sp) },
+            trailingIcon = { Text(glyph, color = GadmMuted, fontSize = 20.sp) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = GadmLime,
+                unfocusedBorderColor = GadmBorder,
+                focusedContainerColor = GadmWhite,
+                unfocusedContainerColor = GadmWhite,
+                cursorColor = GadmLime
+            )
+        )
     }
 }
 
 @Composable
-private fun IncidentCard(incident: GadmIncident, onClick: () -> Unit) {
-    AppCard(onClick = onClick, borderColor = severityColor(incident.severity).copy(alpha = .68f)) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(incident.title, color = GadmWhite, fontWeight = FontWeight.Black)
-                Text(incident.description.ifBlank { "Sem descrição." }, color = GadmMuted, fontSize = 13.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                Spacer(Modifier.height(7.dp))
-                Text(listOf(incident.driverName, incident.orderId).filter { it.isNotBlank() }.joinToString(" • ").ifBlank { "Sem vínculo de corrida" }, color = GadmMuted, fontSize = 12.sp)
-            }
-            StatusPill(incident.severity, accent = severityColor(incident.severity))
-        }
-    }
-}
-
-@Composable
-private fun ProductCard(product: GadmProduct, onToggle: () -> Unit) {
-    AppCard {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(product.name, color = GadmWhite, fontWeight = FontWeight.Black)
-                Text("${product.category.ifBlank { "Sem categoria" }} • Estoque: ${product.stock}", color = GadmMuted, fontSize = 12.sp)
-                Text(money(product.price), color = GadmLime, fontWeight = FontWeight.Black, fontSize = 13.sp)
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                StatusPill(if (product.paused) "Pausado" else "Ativo", accent = if (product.paused) GadmYellow else GadmSuccess)
-                TextButton(onClick = onToggle) { Text(if (product.paused) "LIBERAR" else "PAUSAR", color = if (product.paused) GadmLime else GadmYellow, fontWeight = FontWeight.Black, fontSize = 12.sp) }
-            }
-        }
-    }
-}
-
-@Composable
-private fun MenuRow(title: String, subtitle: String, icon: ImageVector, onClick: () -> Unit) {
-    AppCard(onClick = onClick) {
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Surface(shape = RoundedCornerShape(13.dp), color = GadmBlue.copy(alpha = .19f), modifier = Modifier.size(44.dp)) {
-                Box(contentAlignment = Alignment.Center) { Icon(icon, null, tint = GadmLime) }
-            }
-            Spacer(Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(title, color = GadmWhite, fontWeight = FontWeight.Black)
-                Text(subtitle, color = GadmMuted, fontSize = 12.sp)
-            }
-            Icon(Icons.Filled.ChevronRight, null, tint = GadmMuted)
-        }
-    }
-}
-
-@Composable
-private fun AlertRow(title: String, subtitle: String, onClick: () -> Unit) {
-    AppCard(onClick = onClick, borderColor = GadmYellow.copy(alpha = .60f)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.WarningAmber, null, tint = GadmYellow, modifier = Modifier.size(28.dp))
-            Spacer(Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(title, color = GadmWhite, fontWeight = FontWeight.Black)
-                Text(subtitle, color = GadmMuted, fontSize = 13.sp)
-            }
-            Icon(Icons.Filled.ChevronRight, null, tint = GadmMuted)
-        }
-    }
-}
-
-@Composable
-private fun EmptyCard(title: String, subtitle: String) {
-    AppCard(borderColor = GadmBlue.copy(alpha = .36f)) {
-        Icon(Icons.Filled.Inventory2, null, tint = GadmBlue, modifier = Modifier.size(28.dp))
-        Spacer(Modifier.height(10.dp))
-        Text(title, color = GadmWhite, fontWeight = FontWeight.Black)
-        Text(subtitle, color = GadmMuted, fontSize = 13.sp)
-    }
-}
-
-@Composable
-private fun SwitchRow(title: String, subtitle: String, checked: Boolean, onChange: (Boolean) -> Unit) {
-    AppCard {
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(title, color = GadmWhite, fontWeight = FontWeight.Black)
-                Text(subtitle, color = GadmMuted, fontSize = 12.sp)
-            }
-            Switch(checked = checked, onCheckedChange = onChange)
-        }
-    }
-}
-
-@Composable
-private fun StatusPill(text: String, accent: Color = statusColor(text)) {
-    Surface(shape = RoundedCornerShape(100.dp), color = accent.copy(alpha = .17f), border = BorderStroke(1.dp, accent.copy(alpha = .40f))) {
-        Text(text, color = accent, fontWeight = FontWeight.Black, fontSize = 10.sp, modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp), maxLines = 1)
-    }
-}
-
-private fun statusColor(text: String): Color = when (text.uppercase()) {
-    "NOVO", "RECEBIDO", "DISPONÍVEL", "ATIVO", "CONFIRMADO" -> GadmLime
-    "EM PREPARO", "EM ENTREGA", "NA TORRE", "EM CORRIDA" -> GadmBlue
-    "OFERTA ENVIADA", "PRONTO", "PRIORIDADE", "PAUSADO", "OFFLINE", "PENDENTE" -> GadmYellow
-    "CANCELADO", "BLOQUEADO", "ALTA" -> GadmDanger
-    else -> GadmMuted
-}
-
-private fun driverStatusColor(driver: GadmDriver): Color = when {
-    driver.blocked -> GadmDanger
-    !driver.approved -> GadmYellow
-    driver.availabilityLabel == "Disponível" -> GadmSuccess
-    driver.availabilityLabel == "Oferta enviada" -> GadmYellow
-    driver.availabilityLabel == "Em corrida" -> GadmBlue
-    else -> GadmMuted
-}
-
-private fun severityColor(severity: String): Color = when (severity.uppercase()) {
-    "ALTA", "CRITICA", "CRÍTICA" -> GadmDanger
-    "MEDIA", "MÉDIA" -> GadmYellow
-    else -> GadmBlue
-}
-
-@Composable
-private fun AppCard(
-    modifier: Modifier = Modifier,
-    borderColor: Color? = null,
-    onClick: (() -> Unit)? = null,
-    content: @Composable ColumnScope.() -> Unit
+private fun DashboardScreen(
+    orders: List<Order>,
+    firebaseReady: Boolean,
+    onOpenOrders: () -> Unit,
+    onOpenKitchen: () -> Unit,
+    onOpenTower: () -> Unit,
+    onOpenOrder: (Int) -> Unit
 ) {
-    val click = if (onClick == null) Modifier else Modifier.clickable(onClick = onClick)
+    val received = orders.count { it.status == OrderStatus.RECEIVED }
+    val confirmed = orders.count { it.status == OrderStatus.CONFIRMED }
+    val preparing = orders.count { it.status == OrderStatus.PREPARING }
+    val ready = orders.count { it.status == OrderStatus.READY }
+    val route = orders.count { it.status == OrderStatus.ON_ROUTE }
+    val finished = orders.count { it.status == OrderStatus.FINISHED }
+    val cancelled = orders.count { it.status == OrderStatus.CANCELED }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item { Header(title = "Dashboard Admin", subtitle = "Segunda-feira, 19 de maio", badge = if (firebaseReady) "Online" else "Modo local") }
+        item {
+            Text("Olá, Admin! 👋", color = GadmNavy, fontWeight = FontWeight.ExtraBold, fontSize = 23.sp)
+        }
+        item {
+            MetricGrid(
+                listOf(
+                    Metric("$received", "Recebidos", "▤", GadmBlue, GadmSoftBlue, onOpenOrders),
+                    Metric("$confirmed", "Confirmados", "◌", GadmYellow, GadmSoftOrange, onOpenOrders),
+                    Metric("$preparing", "Em preparo", "⌁", Color(0xFFFF8B24), GadmSoftOrange, onOpenKitchen),
+                    Metric("$ready", "Prontos", "✓", GadmSuccess, GadmSoftLime, onOpenKitchen),
+                    Metric("$route", "Em rota", "⌖", Color(0xFF7D5CE7), Color(0xFFF0EDFF), onOpenTower),
+                    Metric("$finished", "Finalizados", "◉", GadmMuted, Color(0xFFF0F2F5), onOpenOrders)
+                )
+            )
+        }
+        item {
+            if (cancelled > 0) {
+                SmallAlert("$cancelled cancelados hoje", "Revisar ocorrências e motivo do cancelamento.", GadmDanger, GadmSoftDanger)
+            }
+        }
+        item { RevenueCard() }
+        item { SectionTitle("Ações rápidas", "Operação do dia") }
+        item {
+            QuickActions(
+                onOrders = onOpenOrders,
+                onKitchen = onOpenKitchen,
+                onTower = onOpenTower,
+                onOpenOrder = onOpenOrder,
+                firstOrder = orders.firstOrNull()?.id
+            )
+        }
+        item { SectionTitle("Acompanhar agora", "Pedidos com ação pendente") }
+        items(orders.filter { it.status in setOf(OrderStatus.RECEIVED, OrderStatus.CONFIRMED, OrderStatus.PREPARING, OrderStatus.READY) }.take(4), key = { it.id }) {
+            OrderCard(order = it, onClick = { onOpenOrder(it.id) }, compact = true)
+        }
+        item { Spacer(Modifier.height(8.dp)) }
+    }
+}
+
+private data class Metric(val value: String, val label: String, val glyph: String, val color: Color, val tint: Color, val onClick: () -> Unit)
+
+@Composable
+private fun MetricGrid(metrics: List<Metric>) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        metrics.chunked(2).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                row.forEach { metric ->
+                    MetricCard(metric, Modifier.weight(1f))
+                }
+                if (row.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun MetricCard(metric: Metric, modifier: Modifier = Modifier) {
     Card(
-        modifier = modifier.then(click),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = GadmSurface),
-        border = borderColor?.let { BorderStroke(1.dp, it) } ?: BorderStroke(1.dp, GadmMuted.copy(alpha = .10f))
+        modifier = modifier.clickable { metric.onClick() },
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = GadmWhite),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, GadmBorder)
     ) {
-        Column(modifier = Modifier.padding(15.dp), content = content)
-    }
-}
-
-@Composable
-private fun PrimaryButton(text: String, icon: ImageVector, enabled: Boolean = true, onClick: () -> Unit) {
-    androidx.compose.material3.Button(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(15.dp),
-        colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = GadmLime, contentColor = GadmNavy, disabledContainerColor = GadmMuted.copy(alpha = .30f), disabledContentColor = GadmNavy.copy(alpha = .5f)),
-        contentPadding = PaddingValues(vertical = 14.dp)
-    ) {
-        Icon(icon, null, modifier = Modifier.size(19.dp))
-        Spacer(Modifier.width(8.dp))
-        Text(text, fontWeight = FontWeight.Black, fontSize = 12.sp)
-    }
-}
-
-@Composable
-private fun SecondaryButton(text: String, icon: ImageVector, onClick: () -> Unit) {
-    OutlinedButton(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(15.dp),
-        border = BorderStroke(1.dp, GadmLime.copy(alpha = .65f)),
-        contentPadding = PaddingValues(vertical = 13.dp)
-    ) {
-        Icon(icon, null, tint = GadmLime, modifier = Modifier.size(19.dp))
-        Spacer(Modifier.width(8.dp))
-        Text(text, color = GadmLime, fontWeight = FontWeight.Black, fontSize = 12.sp)
-    }
-}
-
-@Composable
-private fun appTextFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedTextColor = GadmWhite,
-    unfocusedTextColor = GadmWhite,
-    focusedBorderColor = GadmLime,
-    unfocusedBorderColor = GadmMuted.copy(alpha = .45f),
-    focusedLabelColor = GadmLime,
-    unfocusedLabelColor = GadmMuted,
-    cursorColor = GadmLime,
-    focusedContainerColor = GadmSurface,
-    unfocusedContainerColor = GadmSurface
-)
-
-@Composable
-private fun OrderDetailDialog(
-    order: GadmOrder,
-    onDismiss: () -> Unit,
-    onAccept: () -> Unit,
-    onStartKitchen: () -> Unit,
-    onFinishKitchen: () -> Unit,
-    onTower: () -> Unit,
-    onCancel: (String) -> Unit
-) {
-    var cancelMode by remember { mutableStateOf(false) }
-    var reason by remember { mutableStateOf("") }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = GadmSurfaceStrong,
-        titleContentColor = GadmWhite,
-        textContentColor = GadmMuted,
-        title = { Text(order.code, fontWeight = FontWeight.Black) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                Text(order.customerName, color = GadmWhite, fontWeight = FontWeight.Bold)
-                Text(order.itemsLabel)
-                Text(order.address.ifBlank { "Endereço não informado" })
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { StatusPill(order.currentStage); StatusPill(money(order.total), accent = GadmLime) }
-                if (cancelMode) OutlinedTextField(value = reason, onValueChange = { reason = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Motivo do cancelamento") }, colors = appTextFieldColors())
+        Column(modifier = Modifier.padding(14.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text(metric.value, color = metric.color, fontWeight = FontWeight.ExtraBold, fontSize = 24.sp)
+                GlyphBadge(metric.glyph, metric.color, metric.tint)
             }
-        },
-        confirmButton = {
-            when {
-                cancelMode -> TextButton(onClick = { onCancel(reason.ifBlank { "Cancelado pelo gestor" }) }) { Text("CONFIRMAR CANCELAMENTO", color = GadmDanger, fontWeight = FontWeight.Black) }
-                order.currentStage == "Novo" -> TextButton(onClick = onAccept) { Text("ACEITAR E PREPARAR", color = GadmLime, fontWeight = FontWeight.Black) }
-                order.currentStage != "Em preparo" && order.currentStage != "Pronto" -> TextButton(onClick = onStartKitchen) { Text("INICIAR PREPARO", color = GadmLime, fontWeight = FontWeight.Black) }
-                order.currentStage == "Em preparo" -> TextButton(onClick = onFinishKitchen) { Text("MARCAR PRONTO", color = GadmLime, fontWeight = FontWeight.Black) }
-                else -> TextButton(onClick = onTower) { Text("ENVIAR PARA TORRE", color = GadmLime, fontWeight = FontWeight.Black) }
+            Spacer(Modifier.height(4.dp))
+            Text(metric.label, color = GadmNavy, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+            Spacer(Modifier.height(5.dp))
+            Text("Ver todos ›", color = GadmBlue, fontSize = 11.sp)
+        }
+    }
+}
+
+@Composable
+private fun RevenueCard() {
+    SurfaceCard {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
+            Column {
+                Text("Resumo do dia", color = GadmNavy, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text("Atualizado às 14:32", color = GadmMuted, fontSize = 11.sp)
+                Spacer(Modifier.height(14.dp))
+                Text("Faturamento do dia", color = GadmMuted, fontSize = 12.sp)
+                Text("R$ 4.785,60", color = GadmNavy, fontSize = 25.sp, fontWeight = FontWeight.ExtraBold)
+                Text("↗ 18,6% em relação a ontem", color = GadmSuccess, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
             }
-        },
-        dismissButton = {
-            Row {
-                if (!cancelMode) TextButton(onClick = { cancelMode = true }) { Text("CANCELAR", color = GadmDanger) }
-                TextButton(onClick = onDismiss) { Text("FECHAR", color = GadmMuted) }
+            MiniChart()
+        }
+        Spacer(Modifier.height(16.dp))
+        Divider(color = GadmBorder)
+        Spacer(Modifier.height(12.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            SummaryMetric("Pedidos do dia", "128")
+            SummaryMetric("Entregadores", "12")
+            SummaryMetric("Tempo médio", "34 min")
+        }
+    }
+}
+
+@Composable
+private fun MiniChart() {
+    Column(modifier = Modifier.width(112.dp), verticalArrangement = Arrangement.Bottom) {
+        Spacer(Modifier.height(19.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
+            listOf(18, 32, 25, 48, 39, 56, 72).forEachIndexed { index, h ->
+                Box(
+                    modifier = Modifier
+                        .width(9.dp)
+                        .height(h.dp)
+                        .clip(RoundedCornerShape(9.dp))
+                        .background(if (index == 6) GadmLime else GadmSoftLime)
+                )
             }
         }
-    )
+    }
 }
 
 @Composable
-private fun AssignDriverDialog(order: GadmOrder, drivers: List<GadmDriver>, onDismiss: () -> Unit, onAssign: (GadmDriver) -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = GadmSurfaceStrong,
-        titleContentColor = GadmWhite,
-        textContentColor = GadmMuted,
-        title = { Text("Escolher entregador", fontWeight = FontWeight.Black) },
-        text = {
-            Column {
-                Text("${order.code} • ${order.customerName}")
-                Spacer(Modifier.height(10.dp))
-                if (drivers.isEmpty()) Text("Nenhum entregador apto sem corrida ativa.", color = GadmYellow)
-                else LazyColumn(modifier = Modifier.heightIn(max = 330.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(drivers, key = { it.id }) { driver ->
-                        AppCard(onClick = { onAssign(driver) }, borderColor = GadmLime.copy(alpha = .34f)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Surface(shape = CircleShape, color = GadmBlue.copy(alpha = .2f), modifier = Modifier.size(38.dp)) { Box(contentAlignment = Alignment.Center) { Text(driver.name.take(1).uppercase(), color = GadmLime, fontWeight = FontWeight.Black) } }
-                                Spacer(Modifier.width(10.dp))
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(driver.name, color = GadmWhite, fontWeight = FontWeight.Black)
-                                    Text(listOf(driver.vehicle, driver.plate).filter { it.isNotBlank() }.joinToString(" • ").ifBlank { driver.phone }, color = GadmMuted, fontSize = 12.sp)
-                                }
-                                Icon(Icons.Filled.ChevronRight, null, tint = GadmLime)
-                            }
+private fun SummaryMetric(title: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, color = GadmNavy, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+        Text(title, color = GadmMuted, fontSize = 10.sp, textAlign = TextAlign.Center, lineHeight = 12.sp)
+    }
+}
+
+@Composable
+private fun QuickActions(
+    onOrders: () -> Unit,
+    onKitchen: () -> Unit,
+    onTower: () -> Unit,
+    onOpenOrder: (Int) -> Unit,
+    firstOrder: Int?
+) {
+    val actions = listOf(
+        QuickAction("Novo pedido", "＋", { firstOrder?.let(onOpenOrder) }),
+        QuickAction("Pedidos", "▤", onOrders),
+        QuickAction("Cozinha", "⌁", onKitchen),
+        QuickAction("Torre", "⌖", onTower),
+        QuickAction("Chat cliente", "◌", { }),
+        QuickAction("Estoque", "◇", { }),
+        QuickAction("Cardápio", "▧", { }),
+        QuickAction("Relatórios", "⌁", { })
+    )
+    Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+        actions.chunked(4).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(9.dp), modifier = Modifier.fillMaxWidth()) {
+                row.forEach { action ->
+                    Card(
+                        modifier = Modifier.weight(1f).clickable { action.onClick() },
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = GadmWhite),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, GadmBorder),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(vertical = 11.dp, horizontal = 5.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(action.glyph, color = GadmBlue, fontSize = 21.sp)
+                            Spacer(Modifier.height(6.dp))
+                            Text(action.label, color = GadmNavy, fontSize = 9.sp, textAlign = TextAlign.Center, lineHeight = 11.sp, maxLines = 2)
                         }
                     }
                 }
             }
-        },
-        confirmButton = {},
-        dismissButton = { TextButton(onClick = onDismiss) { Text("FECHAR", color = GadmMuted) } }
-    )
+        }
+    }
 }
 
+private data class QuickAction(val label: String, val glyph: String, val onClick: () -> Unit)
+
 @Composable
-private fun DriverDetailDialog(
-    driver: GadmDriver,
-    onDismiss: () -> Unit,
-    onApprove: () -> Unit,
-    onCorrection: (String) -> Unit,
-    onBlock: (String) -> Unit,
-    onUnblock: () -> Unit,
-    onCancelOffer: () -> Unit,
-    onRelease: () -> Unit
+private fun OrdersScreen(
+    orders: List<Order>,
+    onOpen: (Int) -> Unit,
+    onQuickAction: (Int, OrderStatus) -> Unit
 ) {
-    var mode by remember { mutableStateOf("") }
-    var reason by remember { mutableStateOf("") }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = GadmSurfaceStrong,
-        titleContentColor = GadmWhite,
-        textContentColor = GadmMuted,
-        title = { Text(driver.name, fontWeight = FontWeight.Black) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                Text("${driver.vehicle} ${driver.plate}".trim().ifBlank { driver.phone }, color = GadmMuted)
-                StatusPill(driver.availabilityLabel, accent = driverStatusColor(driver))
-                Text("PIX: ${driver.pix.ifBlank { "Não informado" }}", color = GadmMuted, fontSize = 12.sp)
-                if (driver.currentOrderId.isNotBlank() || driver.currentRideId.isNotBlank()) Text("Corrida ativa: ${driver.currentOrderId.ifBlank { driver.currentRideId }}", color = GadmYellow, fontSize = 12.sp)
-                if (driver.pendingOfferOrderId.isNotBlank() || driver.pendingOfferRideId.isNotBlank()) Text("Oferta pendente: ${driver.pendingOfferOrderId.ifBlank { driver.pendingOfferRideId }}", color = GadmYellow, fontSize = 12.sp)
-                if (mode.isNotBlank()) OutlinedTextField(value = reason, onValueChange = { reason = it }, modifier = Modifier.fillMaxWidth(), label = { Text(if (mode == "block") "Motivo do bloqueio" else "O que precisa corrigir?") }, colors = appTextFieldColors())
-            }
-        },
-        confirmButton = {
-            when {
-                mode == "block" -> TextButton(onClick = { onBlock(reason.ifBlank { "Bloqueado pelo gestor" }) }) { Text("CONFIRMAR BLOQUEIO", color = GadmDanger, fontWeight = FontWeight.Black) }
-                mode == "correction" -> TextButton(onClick = { onCorrection(reason.ifBlank { "Revise seus dados cadastrais" }) }) { Text("ENVIAR SOLICITAÇÃO", color = GadmYellow, fontWeight = FontWeight.Black) }
-                driver.blocked -> TextButton(onClick = onUnblock) { Text("DESBLOQUEAR", color = GadmLime, fontWeight = FontWeight.Black) }
-                !driver.approved -> TextButton(onClick = onApprove) { Text("APROVAR", color = GadmLime, fontWeight = FontWeight.Black) }
-                driver.pendingOfferOrderId.isNotBlank() || driver.pendingOfferRideId.isNotBlank() -> TextButton(onClick = onCancelOffer) { Text("CANCELAR OFERTA", color = GadmYellow, fontWeight = FontWeight.Black) }
-                else -> TextButton(onClick = onRelease) { Text("LIBERAR / DESTRAVAR", color = GadmLime, fontWeight = FontWeight.Black) }
-            }
-        },
-        dismissButton = {
-            Row {
-                if (mode.isBlank() && !driver.blocked) {
-                    TextButton(onClick = { mode = if (!driver.approved) "correction" else "block" }) { Text(if (!driver.approved) "PEDIR CORREÇÃO" else "BLOQUEAR", color = if (!driver.approved) GadmYellow else GadmDanger) }
+    var filter by rememberSaveable { mutableStateOf("Todos") }
+    val filterLabels = listOf("Todos") + OrderStatus.values().map { it.compact }
+    val filtered = if (filter == "Todos") orders else orders.filter { it.status.compact == filter }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        Header(title = "Pedidos", subtitle = "Operação em tempo real", trailing = "⌕  ⌇")
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            filterLabels.forEach { label ->
+                val selected = filter == label
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(if (selected) GadmSoftBlue else GadmWhite)
+                        .border(1.dp, if (selected) GadmBlue else GadmBorder, RoundedCornerShape(12.dp))
+                        .clickable { filter = label }
+                        .padding(horizontal = 11.dp, vertical = 8.dp)
+                ) {
+                    Text(label, color = if (selected) GadmBlue else GadmMuted, fontSize = 12.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium)
                 }
-                TextButton(onClick = onDismiss) { Text("FECHAR", color = GadmMuted) }
             }
         }
-    )
+        Spacer(Modifier.height(10.dp))
+        Text("Ordenar: mais recentes", color = GadmMuted, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 16.dp))
+        Spacer(Modifier.height(8.dp))
+        LazyColumn(
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(9.dp)
+        ) {
+            items(filtered, key = { it.id }) { order ->
+                OrderCard(order = order, onClick = { onOpen(order.id) }, onQuickAction = onQuickAction)
+            }
+            item { Spacer(Modifier.height(8.dp)) }
+        }
+    }
 }
 
 @Composable
-private fun IncidentDetailDialog(incident: GadmIncident, onDismiss: () -> Unit, onResolve: (Boolean) -> Unit) {
-    var release by remember { mutableStateOf(true) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = GadmSurfaceStrong,
-        titleContentColor = GadmWhite,
-        textContentColor = GadmMuted,
-        title = { Text(incident.title, fontWeight = FontWeight.Black) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(incident.description.ifBlank { "Sem descrição registrada." })
-                Text("Pedido: ${incident.orderId.ifBlank { "não vinculado" }}", color = GadmMuted, fontSize = 12.sp)
-                Text("Entregador: ${incident.driverName.ifBlank { incident.driverId.ifBlank { "não vinculado" } }}", color = GadmMuted, fontSize = 12.sp)
-                SwitchRow("Liberar entregador", "Limpa os vínculos de missão e deixa disponível após resolver.", release) { release = it }
+private fun OrderCard(
+    order: Order,
+    onClick: () -> Unit,
+    compact: Boolean = false,
+    onQuickAction: ((Int, OrderStatus) -> Unit)? = null
+) {
+    SurfaceCard(modifier = Modifier.clickable { onClick() }, padding = 0.dp) {
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Box(modifier = Modifier.width(4.dp).height(if (compact) 88.dp else 104.dp).background(order.status.accent))
+            Column(modifier = Modifier.padding(12.dp).weight(1f)) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("#${order.id}", color = GadmNavy, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp)
+                    StatusPill(order.status)
+                }
+                Spacer(Modifier.height(5.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(order.customer, color = GadmNavy, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text("⌖ ${order.neighborhood}", color = GadmMuted, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                    Text(order.value, color = if (order.status == OrderStatus.ON_ROUTE) GadmBlue else GadmSuccess, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
+                }
+                Spacer(Modifier.height(6.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("▧ ${order.items} itens   ◷ ${order.time}   ${order.payment}", color = GadmMuted, fontSize = 10.sp, maxLines = 1)
+                    if (!compact && onQuickAction != null) {
+                        val next = nextStatus(order.status)
+                        if (next != null) {
+                            Text(
+                                text = "${next.label} ›",
+                                color = GadmBlue,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 10.sp,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(GadmSoftBlue)
+                                    .clickable { onQuickAction(order.id, next) }
+                                    .padding(horizontal = 7.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                }
             }
-        },
-        confirmButton = { TextButton(onClick = { onResolve(release) }) { Text("RESOLVER OCORRÊNCIA", color = GadmLime, fontWeight = FontWeight.Black) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("FECHAR", color = GadmMuted) } }
+        }
+    }
+}
+
+@Composable
+private fun OrderDetailScreen(
+    order: Order,
+    onBack: () -> Unit,
+    onStatusChange: (OrderStatus) -> Unit,
+    onFeedback: (String) -> Unit
+) {
+    val next = nextStatus(order.status)
+    Column(modifier = Modifier.fillMaxSize().background(GadmSurface)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 16.dp, vertical = 13.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("‹", color = GadmNavy, fontSize = 33.sp, modifier = Modifier.clickable { onBack() }.padding(end = 11.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Pedido #${order.id}", color = GadmNavy, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp)
+                Text("Atualizado agora", color = GadmMuted, fontSize = 11.sp)
+            }
+            Text("⋯", color = GadmNavy, fontSize = 24.sp)
+        }
+        LazyColumn(
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 2.dp),
+            verticalArrangement = Arrangement.spacedBy(11.dp)
+        ) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(order.status.accent)
+                        .padding(12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(order.status.label.uppercase(), color = if (order.status == OrderStatus.CONFIRMED || order.status == OrderStatus.PREPARING) GadmNavy else GadmWhite, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp)
+                }
+            }
+            item {
+                SurfaceCard {
+                    SectionTitle("Cliente", "Via WhatsApp")
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        GlyphBadge("♙", GadmBlue, GadmSoftBlue)
+                        Spacer(Modifier.width(10.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(order.customer, color = GadmNavy, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            Text(order.phone, color = GadmMuted, fontSize = 12.sp)
+                        }
+                        Text("☎", color = GadmBlue, fontSize = 20.sp)
+                    }
+                    Spacer(Modifier.height(14.dp))
+                    Divider(color = GadmBorder)
+                    Spacer(Modifier.height(12.dp))
+                    Text("ENDEREÇO DE ENTREGA", color = GadmMuted, fontWeight = FontWeight.Bold, fontSize = 10.sp, letterSpacing = 0.8.sp)
+                    Spacer(Modifier.height(6.dp))
+                    Text("⌖ ${order.address}", color = GadmNavy, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                    Text("Goiânia · GO · CEP 74255-220", color = GadmMuted, fontSize = 11.sp)
+                    Text("Ver no mapa ›", color = GadmBlue, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 6.dp).clickable { onFeedback("Mapa do pedido aberto.") })
+                }
+            }
+            item {
+                SurfaceCard {
+                    SectionTitle("Itens do pedido (${order.items})", "")
+                    order.contents.forEachIndexed { index, item ->
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("${index + 1}x  $item", color = GadmNavy, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                                Text("Adicionais conforme montagem do cliente", color = GadmMuted, fontSize = 10.sp)
+                            }
+                            Text(if (index == 0) "R$ 32,90" else "R$ 28,90", color = GadmNavy, fontSize = 12.sp)
+                        }
+                        if (index != order.contents.lastIndex) Spacer(Modifier.height(11.dp))
+                    }
+                    Spacer(Modifier.height(12.dp))
+                    Divider(color = GadmBorder)
+                    Spacer(Modifier.height(9.dp))
+                    MoneyLine("Subtotal", "R$ 65,80")
+                    MoneyLine("Taxa de entrega", "R$ 6,00")
+                    Spacer(Modifier.height(3.dp))
+                    MoneyLine("Total do pedido", order.value, emphasized = true)
+                }
+            }
+            item {
+                SurfaceCard {
+                    SectionTitle("Pagamento", "")
+                    MoneyLine("Forma de pagamento", order.payment)
+                    MoneyLine("Troco para", if (order.payment == "Dinheiro") "R$ 50,00" else "—")
+                    if (order.payment == "Dinheiro") MoneyLine("Troco", "R$ 14,20", emphasisColor = GadmYellow)
+                    Spacer(Modifier.height(12.dp))
+                    Text("OBSERVAÇÕES DO CLIENTE", color = GadmMuted, fontWeight = FontWeight.Bold, fontSize = 10.sp, letterSpacing = 0.7.sp)
+                    Spacer(Modifier.height(4.dp))
+                    Text(order.notes, color = GadmNavy, fontSize = 12.sp)
+                }
+            }
+            item { Timeline(status = order.status) }
+            item {
+                SurfaceCard {
+                    Text("Ações inteligentes", color = GadmNavy, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+                    Spacer(Modifier.height(11.dp))
+                    if (next != null) {
+                        PrimaryButton(
+                            text = when (next) {
+                                OrderStatus.CONFIRMED -> "CONFIRMAR PEDIDO"
+                                OrderStatus.PREPARING -> "INICIAR PREPARO"
+                                OrderStatus.READY -> "FINALIZAR PREPARO"
+                                OrderStatus.ON_ROUTE -> "ENVIAR PARA TORRE"
+                                OrderStatus.FINISHED -> "FINALIZAR ENTREGA"
+                                else -> "ATUALIZAR PEDIDO"
+                            },
+                            onClick = { onStatusChange(next) }
+                        )
+                    }
+                    Spacer(Modifier.height(9.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(9.dp), modifier = Modifier.fillMaxWidth()) {
+                        OutlineAction("Corrigir pedido", "⌕", Modifier.weight(1f)) { onFeedback("Edição do pedido aberta.") }
+                        OutlineAction("Priorizar", "★", Modifier.weight(1f)) { onFeedback("Pedido #${order.id} priorizado na cozinha.") }
+                    }
+                    Spacer(Modifier.height(9.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(9.dp), modifier = Modifier.fillMaxWidth()) {
+                        OutlineAction("Chamar cliente", "☎", Modifier.weight(1f)) { onFeedback("Ligação para ${order.customer} preparada.") }
+                        DangerAction("Cancelar", Modifier.weight(1f)) { onStatusChange(OrderStatus.CANCELED) }
+                    }
+                }
+            }
+            item { Spacer(Modifier.height(16.dp)) }
+        }
+    }
+}
+
+@Composable
+private fun KitchenScreen(
+    orders: List<Order>,
+    onOpen: (Int) -> Unit,
+    onStatusChange: (Int, OrderStatus) -> Unit
+) {
+    val preparing = orders.filter { it.status == OrderStatus.PREPARING }
+    val urgent = preparing.filter { it.prepMinutes >= 10 }
+    val ready = orders.filter { it.status == OrderStatus.READY }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        Header(title = "Cozinha / Produção", subtitle = "Fila e tempo de preparo", trailing = "⌇")
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            KitchenTopChip("Visão geral", "${preparing.size + ready.size}", GadmBlue, GadmSoftBlue, Modifier.weight(1f))
+            KitchenTopChip("Prioritários", "${urgent.size}", GadmDanger, GadmSoftDanger, Modifier.weight(1f))
+            KitchenTopChip("Prontos", "${ready.size}", GadmSuccess, GadmSoftLime, Modifier.weight(1f))
+        }
+        Spacer(Modifier.height(12.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(11.dp)
+        ) {
+            KitchenLane(
+                title = "EM PREPARO",
+                count = preparing.size,
+                color = GadmBlue,
+                tint = GadmSoftBlue,
+                orders = preparing,
+                buttonText = "DETALHES",
+                onOpen = onOpen,
+                onAction = { }
+            )
+            KitchenLane(
+                title = "PRIORITÁRIOS",
+                count = urgent.size,
+                color = GadmDanger,
+                tint = GadmSoftDanger,
+                orders = urgent.ifEmpty { preparing.take(1) },
+                buttonText = "INICIAR AGORA",
+                onOpen = onOpen,
+                onAction = { onStatusChange(it.id, OrderStatus.PREPARING) }
+            )
+            KitchenLane(
+                title = "PRONTOS",
+                count = ready.size,
+                color = GadmSuccess,
+                tint = GadmSoftLime,
+                orders = ready,
+                buttonText = "ENVIAR P/ TORRE",
+                onOpen = onOpen,
+                onAction = { onStatusChange(it.id, OrderStatus.ON_ROUTE) }
+            )
+        }
+        Spacer(Modifier.height(12.dp))
+        SurfaceCard(modifier = Modifier.padding(horizontal = 16.dp)) {
+            SectionTitle("Indicadores da cozinha", "Atualizado agora")
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                SummaryMetric("Em preparo", "${preparing.size}")
+                SummaryMetric("Prioritários", "${urgent.size}")
+                SummaryMetric("Prontos", "${ready.size}")
+                SummaryMetric("Tempo médio", "39 min")
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        Text("Toque em um pedido para abrir os detalhes, alterar status ou chamar o cliente.", color = GadmMuted, fontSize = 11.sp, modifier = Modifier.padding(horizontal = 18.dp))
+    }
+}
+
+@Composable
+private fun KitchenTopChip(title: String, value: String, color: Color, tint: Color, modifier: Modifier) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = tint),
+        border = androidx.compose.foundation.BorderStroke(1.dp, color.copy(alpha = .24f))
+    ) {
+        Column(modifier = Modifier.padding(10.dp)) {
+            Text(value, color = color, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
+            Text(title, color = color, fontSize = 9.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+        }
+    }
+}
+
+@Composable
+private fun KitchenLane(
+    title: String,
+    count: Int,
+    color: Color,
+    tint: Color,
+    orders: List<Order>,
+    buttonText: String,
+    onOpen: (Int) -> Unit,
+    onAction: (Order) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .width(205.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(GadmWhite)
+            .border(1.dp, GadmBorder, RoundedCornerShape(18.dp))
+            .padding(10.dp)
+    ) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text(title, color = color, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold)
+            Box(modifier = Modifier.clip(CircleShape).background(tint).padding(horizontal = 8.dp, vertical = 3.dp)) {
+                Text("$count", color = color, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        if (orders.isEmpty()) {
+            Box(modifier = Modifier.fillMaxWidth().height(152.dp), contentAlignment = Alignment.Center) {
+                Text("Sem pedidos", color = GadmMuted, fontSize = 12.sp)
+            }
+        } else {
+            orders.take(3).forEach { order ->
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp).clickable { onOpen(order.id) },
+                    colors = CardDefaults.cardColors(containerColor = tint),
+                    shape = RoundedCornerShape(14.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column(modifier = Modifier.padding(10.dp)) {
+                        Text("#${order.id}", color = color, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp)
+                        Text(order.customer, color = GadmNavy, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, maxLines = 1)
+                        Text("${order.items} itens · ${order.time}", color = GadmMuted, fontSize = 10.sp)
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            if (order.status == OrderStatus.PREPARING) "%02d:%02d".format(order.prepMinutes, 32) else "✓ PRONTO",
+                            color = color,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = if (order.status == OrderStatus.PREPARING) 22.sp else 15.sp
+                        )
+                        if (order.prepMinutes >= 10) Text("⚠ URGENTE", color = GadmDanger, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(9.dp))
+                                .background(color)
+                                .clickable { onAction(order) }
+                                .padding(vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(buttonText, color = GadmWhite, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TowerScreen(
+    orders: List<Order>,
+    drivers: List<Driver>,
+    onOpen: (Int) -> Unit,
+    onAssign: (Driver, Order) -> Unit
+) {
+    val ready = orders.filter { it.status == OrderStatus.READY }
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Header(title = "Torre / Logística", subtitle = "Despacho e entregadores", trailing = "♧")
+        SurfaceCard(modifier = Modifier.padding(horizontal = 16.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Pedidos prontos para envio (${ready.size})", color = GadmNavy, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp)
+                Text("Atualizado 14:32", color = GadmMuted, fontSize = 10.sp)
+            }
+            Spacer(Modifier.height(10.dp))
+            DispatchMap(ready)
+            Spacer(Modifier.height(8.dp))
+            OutlineAction("VER NO MAPA COMPLETO", "⌖", Modifier.fillMaxWidth()) { }
+        }
+        Spacer(Modifier.height(12.dp))
+        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            SectionTitle("Entregadores disponíveis (${drivers.count { it.available }})", "Ordenar ▾")
+            drivers.forEach { driver ->
+                DriverCard(driver = driver, readyOrder = ready.firstOrNull(), onAssign = { order -> onAssign(driver, order) })
+                Spacer(Modifier.height(8.dp))
+            }
+            Text("Ver todos entregadores ›", color = GadmBlue, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.align(Alignment.CenterHorizontally).padding(vertical = 6.dp))
+            SurfaceCard {
+                SectionTitle("Painel de operação", "")
+                OperationalGrid()
+            }
+            Spacer(Modifier.height(18.dp))
+        }
+    }
+}
+
+@Composable
+private fun DispatchMap(orders: List<Order>) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(184.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color(0xFFF1F4F8))
+            .border(1.dp, GadmBorder, RoundedCornerShape(16.dp))
+    ) {
+        listOf("ST. BUENO", "MARISTA", "JD. GOIÁS", "CAMPINAS", "SETOR OESTE").forEachIndexed { index, name ->
+            Text(
+                name,
+                color = GadmMuted.copy(alpha = .65f),
+                fontSize = 9.sp,
+                modifier = Modifier.padding(start = (14 + (index % 3) * 72).dp, top = (18 + (index / 2) * 52).dp)
+            )
+        }
+        Box(modifier = Modifier.fillMaxWidth().height(1.dp).align(Alignment.Center).background(GadmBorder))
+        Box(modifier = Modifier.fillMaxHeight().width(1.dp).align(Alignment.Center).background(GadmBorder))
+        orders.take(3).forEachIndexed { index, order ->
+            val color = listOf(GadmYellow, GadmBlue, GadmSuccess)[index % 3]
+            Box(
+                modifier = Modifier
+                    .padding(start = (38 + index * 74).dp, top = (64 + (index % 2) * 42).dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(color)
+                    .padding(horizontal = 8.dp, vertical = 5.dp)
+                    .clickable { },
+                contentAlignment = Alignment.Center
+            ) {
+                Text("#${order.id}", color = if (color == GadmYellow) GadmNavy else GadmWhite, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+        Box(modifier = Modifier.align(Alignment.BottomEnd).padding(12.dp).size(32.dp).clip(CircleShape).background(GadmWhite).border(1.dp, GadmBorder, CircleShape), contentAlignment = Alignment.Center) {
+            Text("⌾", color = GadmBlue, fontSize = 18.sp)
+        }
+    }
+}
+
+@Composable
+private fun DriverCard(driver: Driver, readyOrder: Order?, onAssign: (Order) -> Unit) {
+    SurfaceCard(padding = 11.dp) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(GadmSoftBlue), contentAlignment = Alignment.Center) {
+                Text(driver.avatar, color = GadmBlue, fontWeight = FontWeight.ExtraBold, fontSize = 12.sp)
+            }
+            Spacer(Modifier.width(9.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(driver.name, color = GadmNavy, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Spacer(Modifier.width(5.dp))
+                    Box(modifier = Modifier.size(7.dp).clip(CircleShape).background(if (driver.available) GadmSuccess else GadmMuted))
+                }
+                Text("${driver.distance} · ${driver.district} · ${driver.vehicle}", color = GadmMuted, fontSize = 10.sp)
+                Text(driver.payment, color = GadmMuted, fontSize = 10.sp)
+            }
+            if (driver.available && readyOrder != null) {
+                Box(
+                    modifier = Modifier.clip(RoundedCornerShape(9.dp)).background(GadmLime).clickable { onAssign(readyOrder) }.padding(horizontal = 8.dp, vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) { Text("ATRIBUIR", color = GadmNavy, fontWeight = FontWeight.ExtraBold, fontSize = 9.sp) }
+            } else {
+                Text(if (driver.available) "LIVRE" else "EM ROTA", color = GadmMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@Composable
+private fun OperationsScreen(firebaseReady: Boolean, onAction: (String) -> Unit) {
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Header(title = "Painel operacional", subtitle = if (firebaseReady) "Sincronização ativa" else "Modo local seguro", trailing = "⚙")
+        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            SurfaceCard {
+                SectionTitle("Estoque", "Ver todos ›")
+                StockRow("Leite Ninho", "1,2 kg restantes", "BAIXO", GadmYellow, GadmSoftOrange)
+                StockRow("Morango", "0,4 kg restantes", "CRÍTICO", GadmDanger, GadmSoftDanger)
+                StockRow("Granola", "5,3 kg restantes", "OK", GadmSuccess, GadmSoftLime)
+                StockRow("Creme de avelã", "1,1 kg restantes", "BAIXO", GadmYellow, GadmSoftOrange)
+            }
+            Spacer(Modifier.height(12.dp))
+            SurfaceCard {
+                SectionTitle("Ações rápidas", "")
+                OperationalGrid(onAction)
+            }
+            Spacer(Modifier.height(12.dp))
+            SurfaceCard {
+                SectionTitle("Atendimento", "Ver todos ›")
+                ChatRow("Gabriela Souza", "Quero adicionar mais um item", "16:23", "GS", 2)
+                ChatRow("Lucas Oliveira", "Qual o tempo de entrega?", "14:31", "LO", 1)
+                ChatRow("Renata Silva", "Entrega código: 6789, obrigada!", "14:20", "RS", 0)
+            }
+            Spacer(Modifier.height(12.dp))
+            SurfaceCard {
+                SectionTitle("Alertas", "")
+                AlertRow("Estoque de morango crítico", "Agora", GadmDanger)
+                AlertRow("12 pedidos prontos aguardando entrega", "2 min", GadmYellow)
+                AlertRow("Tempo médio da cozinha acima da meta", "5 min", GadmBlue)
+            }
+            Spacer(Modifier.height(18.dp))
+        }
+    }
+}
+
+@Composable
+private fun StockRow(name: String, detail: String, tag: String, color: Color, tint: Color) {
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
+        GlyphBadge("◇", color, tint, size = 34.dp)
+        Spacer(Modifier.width(9.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(name, color = GadmNavy, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            Text(detail, color = GadmMuted, fontSize = 11.sp)
+        }
+        Box(modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(tint).padding(horizontal = 8.dp, vertical = 5.dp)) {
+            Text(tag, color = color, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold)
+        }
+    }
+}
+
+@Composable
+private fun OperationalGrid(onAction: (String) -> Unit = {}) {
+    val actions = listOf(
+        "Estoque baixo" to "⚠",
+        "Chat atendimento" to "◌",
+        "Som novo pedido" to "◖",
+        "Taxa de entrega" to "⌖",
+        "Item pausado" to "Ⅱ",
+        "Mais relatórios" to "⌁"
     )
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        actions.chunked(3).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                row.forEach { (label, glyph) ->
+                    Card(
+                        modifier = Modifier.weight(1f).clickable { onAction(label) },
+                        shape = RoundedCornerShape(13.dp),
+                        colors = CardDefaults.cardColors(containerColor = GadmSurface),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, GadmBorder),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(vertical = 10.dp, horizontal = 5.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(glyph, color = GadmBlue, fontSize = 18.sp)
+                            Spacer(Modifier.height(5.dp))
+                            Text(label, color = GadmNavy, fontSize = 9.sp, textAlign = TextAlign.Center, lineHeight = 11.sp, maxLines = 2)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChatRow(name: String, message: String, time: String, initials: String, unread: Int) {
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(GadmSoftLime), contentAlignment = Alignment.Center) {
+            Text(initials, color = GadmNavy, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        }
+        Spacer(Modifier.width(9.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(name, color = GadmNavy, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            Text(message, color = GadmMuted, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        Column(horizontalAlignment = Alignment.End) {
+            Text(time, color = GadmMuted, fontSize = 10.sp)
+            if (unread > 0) Box(modifier = Modifier.padding(top = 4.dp).size(18.dp).clip(CircleShape).background(GadmLime), contentAlignment = Alignment.Center) {
+                Text("$unread", color = GadmNavy, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold)
+            }
+        }
+    }
+}
+
+@Composable
+private fun AlertRow(title: String, time: String, color: Color) {
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(modifier = Modifier.size(9.dp).clip(CircleShape).background(color))
+        Spacer(Modifier.width(9.dp))
+        Text(title, color = GadmNavy, fontSize = 12.sp, modifier = Modifier.weight(1f))
+        Text(time, color = GadmMuted, fontSize = 10.sp)
+    }
+}
+
+@Composable
+private fun Timeline(status: OrderStatus) {
+    SurfaceCard {
+        SectionTitle("Linha do tempo", "")
+        val steps = listOf(OrderStatus.RECEIVED, OrderStatus.CONFIRMED, OrderStatus.PREPARING, OrderStatus.READY, OrderStatus.ON_ROUTE)
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            steps.forEachIndexed { index, step ->
+                val currentIndex = steps.indexOf(status).coerceAtLeast(0)
+                val done = index <= currentIndex
+                Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(
+                        modifier = Modifier.size(28.dp).clip(CircleShape).background(if (done) GadmLime else GadmSurface).border(1.dp, if (done) GadmLime else GadmBorder, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(if (done) "✓" else "·", color = if (done) GadmNavy else GadmMuted, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text(step.label.replace(" ", "\n"), color = if (done) GadmNavy else GadmMuted, fontSize = 8.sp, textAlign = TextAlign.Center, lineHeight = 9.sp, maxLines = 2)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun Header(title: String, subtitle: String, badge: String? = null, trailing: String = "⌕  ☷") {
+    Row(
+        modifier = Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 16.dp, vertical = 13.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(modifier = Modifier.size(34.dp).clip(RoundedCornerShape(11.dp)).background(GadmWhite).border(1.dp, GadmBorder, RoundedCornerShape(11.dp)), contentAlignment = Alignment.Center) {
+            Text("☰", color = GadmNavy, fontSize = 17.sp)
+        }
+        Spacer(Modifier.width(10.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, color = GadmNavy, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
+            Text(subtitle, color = GadmMuted, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        if (badge != null) {
+            Box(modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(GadmSoftLime).padding(horizontal = 7.dp, vertical = 5.dp)) {
+                Text(badge, color = GadmSuccess, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.width(7.dp))
+        }
+        Text(trailing, color = GadmNavy, fontSize = 19.sp)
+    }
+}
+
+@Composable
+private fun SectionTitle(title: String, action: String) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Text(title, color = GadmNavy, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+        if (action.isNotBlank()) Text(action, color = GadmBlue, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+private fun SurfaceCard(modifier: Modifier = Modifier, padding: androidx.compose.ui.unit.Dp = 14.dp, content: @Composable ColumnScope.() -> Unit) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = GadmWhite),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, GadmBorder)
+    ) {
+        Column(modifier = Modifier.padding(padding), content = content)
+    }
+}
+
+@Composable
+private fun SmallAlert(title: String, detail: String, color: Color, tint: Color) {
+    Row(
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(tint).border(1.dp, color.copy(alpha = .28f), RoundedCornerShape(14.dp)).padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        GlyphBadge("!", color, GadmWhite)
+        Spacer(Modifier.width(10.dp))
+        Column {
+            Text(title, color = color, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            Text(detail, color = GadmMuted, fontSize = 11.sp)
+        }
+    }
+}
+
+@Composable
+private fun GlyphBadge(glyph: String, color: Color, tint: Color, size: androidx.compose.ui.unit.Dp = 38.dp) {
+    Box(modifier = Modifier.size(size).clip(RoundedCornerShape(12.dp)).background(tint), contentAlignment = Alignment.Center) {
+        Text(glyph, color = color, fontSize = (size.value * 0.48f).sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+private fun StatusPill(status: OrderStatus) {
+    Box(modifier = Modifier.clip(RoundedCornerShape(9.dp)).background(status.soft).padding(horizontal = 8.dp, vertical = 5.dp)) {
+        Text(status.label.uppercase(), color = status.accent, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold)
+    }
+}
+
+@Composable
+private fun MoneyLine(label: String, value: String, emphasized: Boolean = false, emphasisColor: Color? = null) {
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(label, color = if (emphasized) GadmNavy else GadmMuted, fontSize = if (emphasized) 14.sp else 12.sp, fontWeight = if (emphasized) FontWeight.ExtraBold else FontWeight.Normal)
+        Text(value, color = emphasisColor ?: if (emphasized) GadmSuccess else GadmNavy, fontSize = if (emphasized) 15.sp else 12.sp, fontWeight = if (emphasized) FontWeight.ExtraBold else FontWeight.Medium)
+    }
+}
+
+@Composable
+private fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth().height(48.dp),
+        shape = RoundedCornerShape(13.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = GadmLime, contentColor = GadmNavy)
+    ) {
+        Text(text, fontWeight = FontWeight.ExtraBold, fontSize = 12.sp)
+    }
+}
+
+@Composable
+private fun OutlineAction(text: String, glyph: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Box(
+        modifier = modifier
+            .height(43.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(GadmWhite)
+            .border(1.dp, GadmBorder, RoundedCornerShape(12.dp))
+            .clickable { onClick() }
+            .padding(horizontal = 10.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("$glyph  $text", color = GadmBlue, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+@Composable
+private fun DangerAction(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Box(
+        modifier = modifier.height(43.dp).clip(RoundedCornerShape(12.dp)).background(GadmSoftDanger).border(1.dp, GadmDanger.copy(alpha = .25f), RoundedCornerShape(12.dp)).clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Text("×  $text", color = GadmDanger, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+private fun BottomBar(active: AppSection, onNavigate: (AppSection) -> Unit, onQuickAdd: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().height(68.dp).background(GadmWhite).border(1.dp, GadmBorder),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        AppSection.values().forEachIndexed { index, section ->
+            if (index == 2) {
+                Box(
+                    modifier = Modifier.size(50.dp).clip(CircleShape).background(GadmLime).border(4.dp, GadmSurface, CircleShape).clickable { onQuickAdd() },
+                    contentAlignment = Alignment.Center
+                ) { Text("+", color = GadmNavy, fontSize = 29.sp, fontWeight = FontWeight.Light) }
+            }
+            NavItem(section, active == section) { onNavigate(section) }
+        }
+    }
+}
+
+@Composable
+private fun NavItem(section: AppSection, selected: Boolean, onClick: () -> Unit) {
+    Column(
+        modifier = Modifier.width(49.dp).clickable { onClick() },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(section.glyph, color = if (selected) GadmLime else GadmMuted, fontSize = 19.sp)
+        Text(section.label, color = if (selected) GadmNavy else GadmMuted, fontSize = 9.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
+    }
+}
+
+private fun nextStatus(status: OrderStatus): OrderStatus? = when (status) {
+    OrderStatus.RECEIVED -> OrderStatus.CONFIRMED
+    OrderStatus.CONFIRMED -> OrderStatus.PREPARING
+    OrderStatus.PREPARING -> OrderStatus.READY
+    OrderStatus.READY -> OrderStatus.ON_ROUTE
+    OrderStatus.ON_ROUTE -> OrderStatus.FINISHED
+    OrderStatus.FINISHED, OrderStatus.CANCELED -> null
 }
