@@ -1,6 +1,5 @@
 package com.rodriguesacai.gadm.data
 
-import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
@@ -8,10 +7,12 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.WriteBatch
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import java.security.MessageDigest
 
 /**
  * Fonte única de comandos do UP GADM Mobile.
@@ -21,16 +22,30 @@ import java.security.MessageDigest
  * - pedidoAtualId/corridaAtualId só pertencem ao entregador depois que o app dele aceitar a missão.
  * - Destravar sempre limpa entregador + pedido + ride + rota relacionada.
  * - Taxa cobrada do cliente nunca é usada como repasse do entregador.
+ * - Catálogo e autenticação por PIN do GADM usam Supabase; operação de pedidos continua no Firestore nesta etapa.
  */
 class GadmRepository(
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
+    private val catalogClient = SupabaseCatalogClient()
+
     fun observeOrders(): Flow<List<GadmOrder>> = observeCollection("pedidos") { it.toGadmOrder() }
     fun observeDrivers(): Flow<List<GadmDriver>> = observeCollection("entregadores") { it.toGadmDriver() }
     fun observeCustomers(): Flow<List<GadmCustomer>> = observeCollection("clientes") { it.toGadmCustomer() }
     fun observeIncidents(): Flow<List<GadmIncident>> = observeCollection("ocorrencias") { it.toGadmIncident() }
-    fun observeProducts(): Flow<List<GadmProduct>> = observeCollection("produtos") { it.toGadmProduct() }
     fun observeFinance(): Flow<List<GadmFinanceEntry>> = observeCollection("financeiro_movimentos") { it.toGadmFinanceEntry() }
+
+    fun observeProducts(): Flow<List<GadmProduct>> = callbackFlow {
+        val job = launch {
+            while (isActive) {
+                val products = runCatching { catalogClient.listProducts() }
+                    .getOrElse { emptyList() }
+                trySend(products)
+                delay(10_000)
+            }
+        }
+        awaitClose { job.cancel() }
+    }
 
     fun observeStoreOperation(): Flow<StoreOperation> = callbackFlow {
         val registration = db.collection("configuracoes_loja").document("operacao")
@@ -66,48 +81,12 @@ class GadmRepository(
 
     suspend fun signIn(pin: String): Result<GadmUser> = runCatching {
         require(pin.length == 5 && pin.all(Char::isDigit)) { "Digite os 5 números do PIN." }
-        val hash = sha256(pin)
-        val results = db.collection("usuarios_gadm")
-            .whereEqualTo("pinHash", hash)
-            .whereEqualTo("ativo", true)
-            .limit(1)
-            .get()
-            .await()
-
-        results.documents.firstOrNull()?.let { document ->
-            return@runCatching GadmUser(
-                id = document.id,
-                name = document.getString("nome") ?: "Gestor",
-                role = document.getString("perfil") ?: "ADMIN",
-                active = true
-            )
-        }
-
-        if (pin == FIRST_ACCESS_PIN) {
-            db.collection("usuarios_gadm").document("master").set(
-                mapOf(
-                    "nome" to "Administrador",
-                    "perfil" to "ADMIN",
-                    "ativo" to true,
-                    "pinHash" to hash,
-                    "criadoEm" to FieldValue.serverTimestamp(),
-                    "atualizadoEm" to FieldValue.serverTimestamp(),
-                    "origem" to ORIGIN
-                ),
-                SetOptions.merge()
-            ).await()
-            GadmUser("master", "Administrador", "ADMIN", true)
-        } else {
-            error("PIN inválido ou usuário sem permissão.")
-        }
+        catalogClient.signIn(pin)
     }
 
     suspend fun changePin(userId: String, newPin: String): Result<Unit> = runCatching {
         require(newPin.length == 5 && newPin.all(Char::isDigit)) { "O novo PIN precisa ter 5 números." }
-        db.collection("usuarios_gadm").document(userId).set(
-            mapOf("pinHash" to sha256(newPin), "atualizadoEm" to FieldValue.serverTimestamp()),
-            SetOptions.merge()
-        ).await()
+        catalogClient.changePin(newPin)
     }
 
     /**
@@ -389,10 +368,7 @@ class GadmRepository(
     }
 
     suspend fun toggleProduct(product: GadmProduct, paused: Boolean): Result<Unit> = runCatching {
-        db.collection("produtos").document(product.id).set(
-            mapOf("pausado" to paused, "indisponivel" to paused, "atualizadoEm" to FieldValue.serverTimestamp()),
-            SetOptions.merge()
-        ).await()
+        catalogClient.toggleProduct(product.id, paused)
         audit("PRODUTO_${if (paused) "PAUSADO" else "ATIVADO"}", product.id, product.name, product.category)
     }
 
@@ -533,12 +509,7 @@ class GadmRepository(
         return 0.0
     }
 
-    private fun sha256(input: String): String = MessageDigest.getInstance("SHA-256")
-        .digest(input.toByteArray())
-        .joinToString("") { "%02x".format(it) }
-
     companion object {
-        private const val FIRST_ACCESS_PIN = "12345"
         private const val ORIGIN = "UP GADM Mobile"
     }
 }
