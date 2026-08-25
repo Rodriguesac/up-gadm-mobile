@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,7 +31,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -60,11 +59,7 @@ private enum class GeralSection(val label: String, val glyph: String) {
 fun GestorGeralApp(vm: GadmViewModel = viewModel()) {
     val state = vm.state
     if (state.user == null) {
-        GestorGeralLogin(
-            message = state.message,
-            onDismissMessage = vm::dismissMessage,
-            onLogin = vm::login
-        )
+        LoginReal(state.message, vm::dismissMessage, vm::login)
         return
     }
 
@@ -74,7 +69,7 @@ fun GestorGeralApp(vm: GadmViewModel = viewModel()) {
     val selected = state.orders.firstOrNull { it.id == selectedOrderId }
 
     if (selected != null) {
-        RealOrderScreen(
+        OrderReal(
             order = selected,
             onBack = { selectedOrderId = null },
             onAdvance = {
@@ -105,21 +100,18 @@ fun GestorGeralApp(vm: GadmViewModel = viewModel()) {
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             Column(Modifier.fillMaxSize()) {
-                GeneralHeader(
-                    title = section.label,
-                    subtitle = "Rodrigues Açaí e Cia • Gestor Geral"
-                )
+                Header(section.label)
                 when (section) {
-                    GeralSection.HOME -> DashboardReal(vm)
-                    GeralSection.ORDERS -> OrdersReal(vm) { selectedOrderId = it.id }
-                    GeralSection.PRODUCTS -> ProductsReal(vm)
-                    GeralSection.STORE -> StoreReal(vm)
-                    GeralSection.MORE -> MoreReal(vm)
+                    GeralSection.HOME -> Dashboard(vm)
+                    GeralSection.ORDERS -> Orders(vm) { selectedOrderId = it.id }
+                    GeralSection.PRODUCTS -> Products(vm)
+                    GeralSection.STORE -> Store(vm)
+                    GeralSection.MORE -> More(vm)
                 }
             }
-            state.message?.let { message ->
+            state.message?.let { msg ->
                 Text(
-                    text = message,
+                    msg,
                     color = GadmWhite,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
@@ -136,24 +128,20 @@ fun GestorGeralApp(vm: GadmViewModel = viewModel()) {
 }
 
 @Composable
-private fun GestorGeralLogin(
-    message: String?,
-    onDismissMessage: () -> Unit,
-    onLogin: (String) -> Unit
-) {
+private fun LoginReal(message: String?, dismiss: () -> Unit, login: (String) -> Unit) {
     var pin by rememberSaveable { mutableStateOf("") }
     Column(
-        modifier = Modifier.fillMaxSize().background(GadmSurface).padding(24.dp),
+        Modifier.fillMaxSize().background(GadmSurface).padding(24.dp),
         verticalArrangement = Arrangement.Center
     ) {
-        Text("GESTOR GERAL", color = GadmNavy, fontWeight = FontWeight.Black, fontSize = 30.sp)
-        Text("Rodrigues Açaí e Cia", color = GadmLime, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        Text("GESTOR GERAL", color = GadmNavy, fontSize = 30.sp, fontWeight = FontWeight.Black)
+        Text("Rodrigues Açaí e Cia", color = GadmLime, fontSize = 16.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
         Text("Administração geral do ecossistema", color = GadmMuted, fontSize = 13.sp)
         Spacer(Modifier.height(28.dp))
         OutlinedTextField(
             value = pin,
-            onValueChange = { value -> pin = value.filter(Char::isDigit).take(5) },
+            onValueChange = { pin = it.filter(Char::isDigit).take(5) },
             label = { Text("PIN administrativo") },
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
@@ -161,14 +149,14 @@ private fun GestorGeralLogin(
         )
         Spacer(Modifier.height(12.dp))
         Button(
-            onClick = { onLogin(pin) },
+            onClick = { login(pin) },
             enabled = pin.length == 5,
             colors = ButtonDefaults.buttonColors(containerColor = GadmLime, contentColor = GadmNavy),
             modifier = Modifier.fillMaxWidth().height(52.dp)
         ) { Text("ENTRAR", fontWeight = FontWeight.Black) }
         message?.let {
             Spacer(Modifier.height(14.dp))
-            Text(it, color = GadmDanger, fontSize = 12.sp, modifier = Modifier.clickable { onDismissMessage() })
+            Text(it, color = GadmDanger, fontSize = 12.sp, modifier = Modifier.clickable { dismiss() })
         }
         Spacer(Modifier.height(28.dp))
         Text("Versão ${AppVersion.SHORT}", color = GadmMuted, fontSize = 11.sp)
@@ -176,73 +164,62 @@ private fun GestorGeralLogin(
 }
 
 @Composable
-private fun GeneralHeader(title: String, subtitle: String) {
+private fun Header(title: String) {
     Column(Modifier.fillMaxWidth().background(GadmWhite).padding(horizontal = 18.dp, vertical = 14.dp)) {
         Text(title, color = GadmNavy, fontSize = 22.sp, fontWeight = FontWeight.Black)
-        Text(subtitle, color = GadmMuted, fontSize = 11.sp)
+        Text("Rodrigues Açaí e Cia • Gestor Geral", color = GadmMuted, fontSize = 11.sp)
     }
 }
 
 @Composable
-private fun DashboardReal(vm: GadmViewModel) {
+private fun Dashboard(vm: GadmViewModel) {
     val s = vm.state
-    val activeOrders = s.orders.filter { it.currentStage !in setOf("Finalizado", "Cancelado") }
-    val newCount = activeOrders.count { it.currentStage == "Novo" }
-    val prepCount = activeOrders.count { it.currentStage == "Em preparo" }
-    val readyCount = activeOrders.count { it.currentStage == "Pronto" }
-    val onlineDrivers = s.drivers.count { it.online && !it.blocked }
-
+    val active = s.orders.filter { it.currentStage !in setOf("Finalizado", "Cancelado") }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        contentPadding = PaddingValues(14.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        item {
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                MetricCard("Novos", newCount.toString(), Modifier.weight(1f))
-                MetricCard("Preparo", prepCount.toString(), Modifier.weight(1f))
-                MetricCard("Prontos", readyCount.toString(), Modifier.weight(1f))
-            }
-        }
-        item {
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                MetricCard("Produtos", s.products.size.toString(), Modifier.weight(1f))
-                MetricCard("Entregadores", onlineDrivers.toString(), Modifier.weight(1f))
-                MetricCard("Loja", if (s.operation.open && s.operation.acceptOrders) "Aberta" else "Fechada", Modifier.weight(1f))
-            }
-        }
-        item { SectionTitle("Pedidos que exigem atenção") }
-        if (activeOrders.isEmpty()) item { EmptyCard("Nenhum pedido operacional no momento.") }
-        items(activeOrders.take(8), key = { it.id }) { order -> OrderCompact(order) }
+        item { Metric("Novos", active.count { it.currentStage == "Novo" }.toString()) }
+        item { Metric("Em preparo", active.count { it.currentStage == "Em preparo" }.toString()) }
+        item { Metric("Prontos", active.count { it.currentStage == "Pronto" }.toString()) }
+        item { Metric("Produtos no Supabase", s.products.size.toString()) }
+        item { Metric("Entregadores online", s.drivers.count { it.online && !it.blocked }.toString()) }
+        item { Metric("Loja", if (s.operation.open && s.operation.acceptOrders) "Aberta" else "Fechada") }
+        item { Title("Pedidos que exigem atenção") }
+        if (active.isEmpty()) item { Info("Nenhum pedido operacional no momento.") }
+        items(active.take(8), key = { it.id }) { CompactOrder(it) }
     }
 }
 
 @Composable
-private fun OrdersReal(vm: GadmViewModel, onOpen: (GadmOrder) -> Unit) {
+private fun Orders(vm: GadmViewModel, open: (GadmOrder) -> Unit) {
     val orders = vm.state.orders.sortedByDescending { it.createdAt }
     if (vm.state.loading && orders.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = GadmLime) }
         return
     }
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp),
+        Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        if (orders.isEmpty()) item { EmptyCard("Nenhum pedido recebido do Firestore.") }
+        if (orders.isEmpty()) item { Info("Nenhum pedido recebido do Firestore.") }
         items(orders, key = { it.id }) { order ->
             Card(
                 colors = CardDefaults.cardColors(containerColor = GadmWhite),
-                modifier = Modifier.fillMaxWidth().clickable { onOpen(order) }
+                modifier = Modifier.fillMaxWidth().clickable { open(order) }
             ) {
                 Column(Modifier.padding(14.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("#${order.code}", fontWeight = FontWeight.Black, color = GadmNavy)
-                        StatusChip(order.currentStage)
+                        Text("#${order.code}", color = GadmNavy, fontWeight = FontWeight.Black)
+                        Status(order.currentStage)
                     }
                     Spacer(Modifier.height(6.dp))
-                    Text(order.customerName, fontWeight = FontWeight.Bold, color = GadmNavy)
-                    if (order.itemsLabel.isNotBlank()) Text(order.itemsLabel, color = GadmMuted, fontSize = 11.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(order.customerName, color = GadmNavy, fontWeight = FontWeight.Bold)
+                    if (order.itemsLabel.isNotBlank()) {
+                        Text(order.itemsLabel, color = GadmMuted, fontSize = 11.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    }
                     Spacer(Modifier.height(8.dp))
                     Text(money(order.total), color = GadmSuccess, fontWeight = FontWeight.Black)
                 }
@@ -252,79 +229,76 @@ private fun OrdersReal(vm: GadmViewModel, onOpen: (GadmOrder) -> Unit) {
 }
 
 @Composable
-private fun RealOrderScreen(order: GadmOrder, onBack: () -> Unit, onAdvance: () -> Unit) {
+private fun OrderReal(order: GadmOrder, onBack: () -> Unit, onAdvance: () -> Unit) {
     val action = when (order.currentStage) {
         "Novo" -> "ACEITAR E INICIAR PREPARO"
         "Em preparo" -> "MARCAR COMO PRONTO"
         "Pronto" -> "ENVIAR PARA TORRE"
         else -> null
     }
-    Column(Modifier.fillMaxSize().background(GadmSurface)) {
-        Row(Modifier.fillMaxWidth().background(GadmWhite).padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            OutlinedButton(onClick = onBack) { Text("Voltar") }
-            Spacer(Modifier.size(12.dp))
-            Column {
-                Text("Pedido #${order.code}", fontWeight = FontWeight.Black, color = GadmNavy, fontSize = 20.sp)
-                Text(order.currentStage, color = GadmMuted, fontSize = 12.sp)
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().background(GadmSurface),
+        contentPadding = PaddingValues(14.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        item {
+            OutlinedButton(onClick = onBack) { Text("← Voltar") }
+            Spacer(Modifier.height(10.dp))
+            Text("Pedido #${order.code}", color = GadmNavy, fontWeight = FontWeight.Black, fontSize = 22.sp)
+            Text(order.currentStage, color = GadmMuted, fontSize = 12.sp)
+        }
+        item { Detail("Cliente", listOf(order.customerName, order.customerPhone, order.address).filter { it.isNotBlank() }) }
+        item { Detail("Itens", listOf(order.itemsLabel.ifBlank { "Itens não descritos" })) }
+        item { Detail("Pagamento", listOf(order.payment.ifBlank { "Não informado" }, "Total ${money(order.total)}", "Entrega ${money(order.deliveryFee)}")) }
+        if (order.driverName.isNotBlank()) item { Detail("Entregador", listOf(order.driverName)) }
+        action?.let { text ->
+            item {
+                Button(
+                    onClick = onAdvance,
+                    colors = ButtonDefaults.buttonColors(containerColor = GadmLime, contentColor = GadmNavy),
+                    modifier = Modifier.fillMaxWidth().height(54.dp)
+                ) { Text(text, fontWeight = FontWeight.Black) }
             }
-        }
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            item { DetailCard("Cliente", listOf(order.customerName, order.customerPhone, order.address).filter { it.isNotBlank() }) }
-            item { DetailCard("Itens", listOf(order.itemsLabel.ifBlank { "Itens não descritos" })) }
-            item { DetailCard("Pagamento", listOf(order.payment.ifBlank { "Não informado" }, "Total ${money(order.total)}", "Entrega ${money(order.deliveryFee)}")) }
-            if (order.driverName.isNotBlank()) item { DetailCard("Entregador", listOf(order.driverName)) }
-        }
-        action?.let {
-            Button(
-                onClick = onAdvance,
-                colors = ButtonDefaults.buttonColors(containerColor = GadmLime, contentColor = GadmNavy),
-                modifier = Modifier.fillMaxWidth().padding(14.dp).height(54.dp)
-            ) { Text(it, fontWeight = FontWeight.Black) }
         }
     }
 }
 
 @Composable
-private fun ProductsReal(vm: GadmViewModel) {
+private fun Products(vm: GadmViewModel) {
     val products = vm.state.products.sortedBy { it.name.lowercase() }
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp),
+        Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(14.dp),
         verticalArrangement = Arrangement.spacedBy(9.dp)
     ) {
         item { Text("Catálogo Supabase", color = GadmMuted, fontSize = 11.sp, fontWeight = FontWeight.Bold) }
-        if (products.isEmpty()) item { EmptyCard("Aguardando catálogo do Supabase. Entre novamente se a sessão expirou.") }
-        items(products, key = { it.id }) { product -> ProductRow(product) { vm.toggleProduct(product, !product.paused) } }
+        if (products.isEmpty()) item { Info("Aguardando catálogo do Supabase. Entre novamente se a sessão expirou.") }
+        items(products, key = { it.id }) { product -> Product(product) { vm.toggleProduct(product, !product.paused) } }
     }
 }
 
 @Composable
-private fun ProductRow(product: GadmProduct, onToggle: () -> Unit) {
+private fun Product(product: GadmProduct, toggle: () -> Unit) {
     Card(colors = CardDefaults.cardColors(containerColor = GadmWhite), modifier = Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().padding(13.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(product.name, color = GadmNavy, fontWeight = FontWeight.Bold, maxLines = 2)
-                Text(listOf(product.category, money(product.price)).filter { it.isNotBlank() }.joinToString(" • "), color = GadmMuted, fontSize = 11.sp)
-            }
-            OutlinedButton(onClick = onToggle) { Text(if (product.paused) "Ativar" else "Pausar") }
+        Column(Modifier.padding(13.dp)) {
+            Text(product.name, color = GadmNavy, fontWeight = FontWeight.Bold, maxLines = 2)
+            Text(listOf(product.category, money(product.price)).filter { it.isNotBlank() }.joinToString(" • "), color = GadmMuted, fontSize = 11.sp)
+            Spacer(Modifier.height(9.dp))
+            OutlinedButton(onClick = toggle) { Text(if (product.paused) "Ativar produto" else "Pausar produto") }
         }
     }
 }
 
 @Composable
-private fun StoreReal(vm: GadmViewModel) {
+private fun Store(vm: GadmViewModel) {
     val op = vm.state.operation
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp),
+        Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(14.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            DetailCard(
+            Detail(
                 "Operação da loja",
                 listOf(
                     if (op.open) "Loja aberta" else "Loja fechada",
@@ -335,60 +309,60 @@ private fun StoreReal(vm: GadmViewModel) {
             )
         }
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                Button(
-                    onClick = { vm.updateOperation(op.copy(open = !op.open)) },
-                    colors = ButtonDefaults.buttonColors(containerColor = if (op.open) GadmDanger else GadmLime, contentColor = if (op.open) GadmWhite else GadmNavy),
-                    modifier = Modifier.weight(1f)
-                ) { Text(if (op.open) "Fechar loja" else "Abrir loja", fontWeight = FontWeight.Bold) }
-                OutlinedButton(onClick = { vm.updateOperation(op.copy(acceptOrders = !op.acceptOrders)) }, modifier = Modifier.weight(1f)) {
-                    Text(if (op.acceptOrders) "Pausar pedidos" else "Retomar pedidos")
-                }
-            }
+            Button(
+                onClick = { vm.updateOperation(op.copy(open = !op.open)) },
+                colors = ButtonDefaults.buttonColors(containerColor = if (op.open) GadmDanger else GadmLime, contentColor = if (op.open) GadmWhite else GadmNavy),
+                modifier = Modifier.fillMaxWidth()
+            ) { Text(if (op.open) "Fechar loja" else "Abrir loja", fontWeight = FontWeight.Bold) }
+        }
+        item {
+            OutlinedButton(
+                onClick = { vm.updateOperation(op.copy(acceptOrders = !op.acceptOrders)) },
+                modifier = Modifier.fillMaxWidth()
+            ) { Text(if (op.acceptOrders) "Pausar novos pedidos" else "Retomar novos pedidos") }
         }
     }
 }
 
 @Composable
-private fun MoreReal(vm: GadmViewModel) {
+private fun More(vm: GadmViewModel) {
     val s = vm.state
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp),
+        Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        item { DetailCard("Conta", listOf(s.user?.name.orEmpty(), "Perfil ${s.user?.role.orEmpty()}", "Versão ${AppVersion.SHORT}")) }
-        item { DetailCard("Ecossistema", listOf("Cliente: rodriguesacaiecia.netlify.app", "Rodrigues Gestor: operação da loja", "Gestor Geral: administração completa")) }
-        item { DetailCard("Dados", listOf("Pedidos e operação: Firebase/Firestore", "Catálogo e PIN administrativo: Supabase")) }
+        item { Detail("Conta", listOf(s.user?.name.orEmpty(), "Perfil ${s.user?.role.orEmpty()}", "Versão ${AppVersion.SHORT}")) }
+        item { Detail("Apps oficiais", listOf("Cliente: rodriguesacaiecia.netlify.app", "Rodrigues Gestor: operação da loja", "Gestor Geral: administração completa")) }
+        item { Detail("Arquitetura", listOf("Pedidos/operação: Firebase e Firestore", "Catálogo/PIN administrativo: Supabase")) }
         item { OutlinedButton(onClick = vm::logout, modifier = Modifier.fillMaxWidth()) { Text("Sair do Gestor Geral") } }
     }
 }
 
 @Composable
-private fun MetricCard(label: String, value: String, modifier: Modifier = Modifier) {
-    Card(colors = CardDefaults.cardColors(containerColor = GadmWhite), modifier = modifier) {
-        Column(Modifier.padding(12.dp)) {
-            Text(value, color = GadmNavy, fontSize = 20.sp, fontWeight = FontWeight.Black, maxLines = 1)
-            Text(label, color = GadmMuted, fontSize = 10.sp, maxLines = 1)
-        }
-    }
-}
-
-@Composable
-private fun OrderCompact(order: GadmOrder) {
+private fun Metric(label: String, value: String) {
     Card(colors = CardDefaults.cardColors(containerColor = GadmWhite), modifier = Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().padding(13.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text("#${order.code} • ${order.customerName}", fontWeight = FontWeight.Bold, color = GadmNavy, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(order.itemsLabel.ifBlank { order.address }, color = GadmMuted, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
-            StatusChip(order.currentStage)
+        Row(Modifier.fillMaxWidth().padding(14.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(label, color = GadmMuted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text(value, color = GadmNavy, fontSize = 18.sp, fontWeight = FontWeight.Black)
         }
     }
 }
 
 @Composable
-private fun StatusChip(status: String) {
+private fun CompactOrder(order: GadmOrder) {
+    Card(colors = CardDefaults.cardColors(containerColor = GadmWhite), modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(13.dp)) {
+            Text("#${order.code} • ${order.customerName}", color = GadmNavy, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(order.itemsLabel.ifBlank { order.address }, color = GadmMuted, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(4.dp))
+            Status(order.currentStage)
+        }
+    }
+}
+
+@Composable
+private fun Status(status: String) {
     val color = when (status) {
         "Novo" -> GadmBlue
         "Em preparo" -> GadmYellow
@@ -400,7 +374,7 @@ private fun StatusChip(status: String) {
 }
 
 @Composable
-private fun DetailCard(title: String, lines: List<String>) {
+private fun Detail(title: String, lines: List<String>) {
     Card(colors = CardDefaults.cardColors(containerColor = GadmWhite), modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(15.dp)) {
             Text(title, color = GadmNavy, fontWeight = FontWeight.Black, fontSize = 15.sp)
@@ -411,9 +385,9 @@ private fun DetailCard(title: String, lines: List<String>) {
 }
 
 @Composable
-private fun SectionTitle(text: String) = Text(text, color = GadmNavy, fontWeight = FontWeight.Black, fontSize = 15.sp)
+private fun Title(text: String) = Text(text, color = GadmNavy, fontWeight = FontWeight.Black, fontSize = 15.sp)
 
 @Composable
-private fun EmptyCard(text: String) = DetailCard("Informação", listOf(text))
+private fun Info(text: String) = Detail("Informação", listOf(text))
 
 private fun money(value: Double): String = NumberFormat.getCurrencyInstance(Locale("pt", "BR")).format(value)
