@@ -4,8 +4,6 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-// O projeto compila mesmo antes de o arquivo do Firebase ser inserido.
-// Quando app/google-services.json existir, o plugin é aplicado automaticamente.
 if (file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
 }
@@ -18,8 +16,8 @@ android {
         applicationId = "com.rodriguesacai.gadm"
         minSdk = 23
         targetSdk = 36
-        versionCode = 30003
-        versionName = "2.1.0"
+        versionCode = 30100
+        versionName = "3.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
