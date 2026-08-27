@@ -262,6 +262,33 @@ class SupabaseCatalogClient {
         }
     }
 
+    suspend fun listOnlineClients(): List<OnlineClient> {
+        requireSession()
+        val response = postOnline(JSONObject().apply { put("action", "list") })
+        val rows = response.optJSONArray("clients") ?: return emptyList()
+        return buildList {
+            for (index in 0 until rows.length()) {
+                val item = rows.optJSONObject(index) ?: continue
+                add(
+                    OnlineClient(
+                        id = item.optString("id"),
+                        name = item.optString("name", "Cliente online"),
+                        page = item.optString("page", "/"),
+                        latitude = if (item.isNull("latitude")) null else item.optDouble("latitude"),
+                        longitude = if (item.isNull("longitude")) null else item.optDouble("longitude"),
+                        accuracyM = if (item.isNull("accuracyM")) null else item.optDouble("accuracyM"),
+                        locationSource = item.optString("locationSource", "none"),
+                        city = item.optString("city"),
+                        region = item.optString("region"),
+                        country = item.optString("country"),
+                        firstSeenAt = item.optString("firstSeenAt"),
+                        lastSeenAt = item.optString("lastSeenAt")
+                    )
+                )
+            }
+        }
+    }
+
     suspend fun markPixChangeSent(id: String, reference: String = "") {
         requireSession()
         postPix(JSONObject().apply {
@@ -284,6 +311,9 @@ class SupabaseCatalogClient {
 
     private suspend fun postPix(payload: JSONObject): JSONObject =
         post(PIX_ENDPOINT, payload, authenticated = true)
+
+    private suspend fun postOnline(payload: JSONObject): JSONObject =
+        post(ONLINE_ENDPOINT, payload, authenticated = true)
 
     private suspend fun post(endpoint: String, payload: JSONObject, authenticated: Boolean): JSONObject =
         withContext(Dispatchers.IO) {
@@ -324,5 +354,6 @@ class SupabaseCatalogClient {
         private var sessionToken: String = ""
         private const val CATALOG_ENDPOINT = "https://jgjmntezfjuyuxhcnvhd.supabase.co/functions/v1/gadm-catalog"
         private const val PIX_ENDPOINT = "https://jgjmntezfjuyuxhcnvhd.supabase.co/functions/v1/pix-change-admin"
+        private const val ONLINE_ENDPOINT = "https://jgjmntezfjuyuxhcnvhd.supabase.co/functions/v1/gadm-online"
     }
 }
