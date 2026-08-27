@@ -14,7 +14,11 @@ import com.rodriguesacai.gadm.data.GadmOrder
 import com.rodriguesacai.gadm.data.GadmProduct
 import com.rodriguesacai.gadm.data.GadmRepository
 import com.rodriguesacai.gadm.data.GadmUser
+import com.rodriguesacai.gadm.data.PixChangeAdminRequest
 import com.rodriguesacai.gadm.data.StoreOperation
+import com.rodriguesacai.gadm.data.SupabaseCatalogClient
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 data class GadmUiState(
@@ -25,6 +29,7 @@ data class GadmUiState(
     val incidents: List<GadmIncident> = emptyList(),
     val products: List<GadmProduct> = emptyList(),
     val finance: List<GadmFinanceEntry> = emptyList(),
+    val pixChanges: List<PixChangeAdminRequest> = emptyList(),
     val operation: StoreOperation = StoreOperation(),
     val loading: Boolean = true,
     val message: String? = null
@@ -32,6 +37,7 @@ data class GadmUiState(
 
 class GadmViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = GadmRepository()
+    private val pixClient = SupabaseCatalogClient()
 
     var state by mutableStateOf(GadmUiState())
         private set
@@ -44,6 +50,12 @@ class GadmViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch { repository.observeProducts().collect { state = state.copy(products = it) } }
         viewModelScope.launch { repository.observeFinance().collect { state = state.copy(finance = it) } }
         viewModelScope.launch { repository.observeStoreOperation().collect { state = state.copy(operation = it) } }
+        viewModelScope.launch {
+            while (isActive) {
+                if (state.user != null) refreshPixChanges(showError = false)
+                delay(5_000)
+            }
+        }
     }
 
     fun dismissMessage() { state = state.copy(message = null) }
@@ -51,12 +63,41 @@ class GadmViewModel(application: Application) : AndroidViewModel(application) {
     fun login(pin: String) {
         viewModelScope.launch {
             repository.signIn(pin)
-                .onSuccess { state = state.copy(user = it, message = "Acesso liberado: ${it.name}") }
+                .onSuccess {
+                    state = state.copy(user = it, message = "Acesso liberado: ${it.name}")
+                    refreshPixChanges(showError = false)
+                }
                 .onFailure { state = state.copy(message = it.message ?: "Não foi possível entrar.") }
         }
     }
 
-    fun logout() { state = state.copy(user = null, message = "Sessão encerrada.") }
+    fun logout() {
+        pixClient.clearSession()
+        state = state.copy(user = null, pixChanges = emptyList(), message = "Sessão encerrada.")
+    }
+
+    fun refreshPixChanges(showError: Boolean = true) {
+        viewModelScope.launch { refreshPixChangesInternal(showError) }
+    }
+
+    private suspend fun refreshPixChangesInternal(showError: Boolean) {
+        runCatching { pixClient.listPixChanges() }
+            .onSuccess { state = state.copy(pixChanges = it) }
+            .onFailure { if (showError) state = state.copy(message = it.message ?: "Não foi possível atualizar os trocos Pix.") }
+    }
+
+    private suspend fun refreshPixChanges(showError: Boolean) = refreshPixChangesInternal(showError)
+
+    fun markPixSent(request: PixChangeAdminRequest, reference: String = "") {
+        viewModelScope.launch {
+            runCatching { pixClient.markPixChangeSent(request.id, reference) }
+                .onSuccess {
+                    state = state.copy(message = "Troco Pix do pedido #${request.orderCode.ifBlank { request.orderId }} marcado como enviado.")
+                    refreshPixChangesInternal(showError = false)
+                }
+                .onFailure { state = state.copy(message = it.message ?: "Não foi possível confirmar o envio do Pix.") }
+        }
+    }
 
     fun changePin(pin: String) {
         val user = state.user
