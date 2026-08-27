@@ -7,17 +7,15 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 /**
- * Cliente mínimo do catálogo Supabase usado pelo GADM.
- *
- * A autenticação continua por PIN, mas a conferência do hash acontece somente
- * no Edge Function. A service-role jamais fica dentro do APK.
+ * Cliente mínimo do Supabase usado pelo GADM.
+ * A autenticação continua por PIN e a service-role jamais fica dentro do APK.
  */
 class SupabaseCatalogClient {
     @Volatile
     private var sessionToken: String = ""
 
     suspend fun signIn(pin: String): GadmUser {
-        val response = post(JSONObject().apply {
+        val response = postCatalog(JSONObject().apply {
             put("action", "login")
             put("pin", pin)
         }, authenticated = false)
@@ -34,7 +32,7 @@ class SupabaseCatalogClient {
 
     suspend fun changePin(newPin: String) {
         requireSession()
-        post(JSONObject().apply {
+        postCatalog(JSONObject().apply {
             put("action", "change_pin")
             put("new_pin", newPin)
         })
@@ -42,7 +40,7 @@ class SupabaseCatalogClient {
 
     suspend fun listProducts(): List<GadmProduct> {
         requireSession()
-        val response = post(JSONObject().apply { put("action", "list_products") })
+        val response = postCatalog(JSONObject().apply { put("action", "list_products") })
         val rows = response.optJSONArray("products") ?: return emptyList()
         return buildList {
             for (index in 0 until rows.length()) {
@@ -65,10 +63,52 @@ class SupabaseCatalogClient {
 
     suspend fun toggleProduct(productId: String, paused: Boolean) {
         requireSession()
-        post(JSONObject().apply {
+        postCatalog(JSONObject().apply {
             put("action", "toggle_product")
             put("product_id", productId)
             put("paused", paused)
+        })
+    }
+
+    suspend fun listPixChanges(): List<PixChangeAdminRequest> {
+        requireSession()
+        val response = postPix(JSONObject().apply { put("action", "list") })
+        val rows = response.optJSONArray("requests") ?: return emptyList()
+        return buildList {
+            for (index in 0 until rows.length()) {
+                val item = rows.optJSONObject(index) ?: continue
+                val received = if (item.isNull("cashReceivedAmount")) null else item.optDouble("cashReceivedAmount")
+                add(
+                    PixChangeAdminRequest(
+                        id = item.optString("id"),
+                        orderId = item.optString("orderId"),
+                        orderCode = item.optString("orderCode"),
+                        customerName = item.optString("customerName", "Cliente"),
+                        amount = item.optDouble("amount", 0.0),
+                        cashExpected = item.optDouble("cashExpected", 0.0),
+                        cashReceivedAmount = received,
+                        cashReceivedAt = item.optString("cashReceivedAt").takeIf { it.isNotBlank() && it != "null" },
+                        status = item.optString("status"),
+                        pixKeyType = item.optString("pixKeyType"),
+                        pixKey = item.optString("pixKey"),
+                        recipientName = item.optString("recipientName"),
+                        bank = item.optString("bank"),
+                        pixSentAt = item.optString("pixSentAt").takeIf { it.isNotBlank() && it != "null" },
+                        pixReference = item.optString("pixReference"),
+                        createdAt = item.optString("createdAt"),
+                        updatedAt = item.optString("updatedAt")
+                    )
+                )
+            }
+        }
+    }
+
+    suspend fun markPixChangeSent(id: String, reference: String = "") {
+        requireSession()
+        postPix(JSONObject().apply {
+            put("action", "mark_sent")
+            put("id", id)
+            if (reference.isNotBlank()) put("reference", reference)
         })
     }
 
@@ -80,9 +120,15 @@ class SupabaseCatalogClient {
         check(sessionToken.isNotBlank()) { "Sessão do GADM expirada. Entre novamente." }
     }
 
-    private suspend fun post(payload: JSONObject, authenticated: Boolean = true): JSONObject =
+    private suspend fun postCatalog(payload: JSONObject, authenticated: Boolean = true): JSONObject =
+        post(CATALOG_ENDPOINT, payload, authenticated)
+
+    private suspend fun postPix(payload: JSONObject): JSONObject =
+        post(PIX_ENDPOINT, payload, authenticated = true)
+
+    private suspend fun post(endpoint: String, payload: JSONObject, authenticated: Boolean): JSONObject =
         withContext(Dispatchers.IO) {
-            val connection = (URL(ENDPOINT).openConnection() as HttpURLConnection).apply {
+            val connection = (URL(endpoint).openConnection() as HttpURLConnection).apply {
                 requestMethod = "POST"
                 connectTimeout = 12_000
                 readTimeout = 18_000
@@ -104,7 +150,7 @@ class SupabaseCatalogClient {
                     val message = response.optString("message")
                         .ifBlank { response.optString("detail") }
                         .ifBlank { response.optString("error") }
-                        .ifBlank { "Falha ao acessar o catálogo ($status)." }
+                        .ifBlank { "Falha ao acessar o Supabase ($status)." }
                     if (status == 401) sessionToken = ""
                     error(message)
                 }
@@ -115,6 +161,7 @@ class SupabaseCatalogClient {
         }
 
     companion object {
-        private const val ENDPOINT = "https://jgjmntezfjuyuxhcnvhd.supabase.co/functions/v1/gadm-catalog"
+        private const val CATALOG_ENDPOINT = "https://jgjmntezfjuyuxhcnvhd.supabase.co/functions/v1/gadm-catalog"
+        private const val PIX_ENDPOINT = "https://jgjmntezfjuyuxhcnvhd.supabase.co/functions/v1/pix-change-admin"
     }
 }
