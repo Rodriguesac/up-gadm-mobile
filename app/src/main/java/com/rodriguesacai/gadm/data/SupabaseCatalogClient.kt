@@ -11,8 +11,6 @@ import java.net.URL
  * A autenticação continua por PIN e a service-role jamais fica dentro do APK.
  */
 class SupabaseCatalogClient {
-    @Volatile
-    private var sessionToken: String = ""
 
     suspend fun signIn(pin: String): GadmUser {
         val response = postCatalog(JSONObject().apply {
@@ -161,6 +159,8 @@ class SupabaseCatalogClient {
         }
 
     companion object {
+        @Volatile
+        private var sessionToken: String = ""
         private const val CATALOG_ENDPOINT = "https://jgjmntezfjuyuxhcnvhd.supabase.co/functions/v1/gadm-catalog"
         private const val PIX_ENDPOINT = "https://jgjmntezfjuyuxhcnvhd.supabase.co/functions/v1/pix-change-admin"
     }
