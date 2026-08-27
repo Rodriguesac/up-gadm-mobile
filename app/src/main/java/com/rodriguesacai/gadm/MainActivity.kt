@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.rodriguesacai.gadm.ui.GadmMobileTheme
-import com.rodriguesacai.gadm.ui.GestorGeralApp
+import com.rodriguesacai.gadm.ui.GadmV24App
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -12,7 +12,7 @@ class MainActivity : ComponentActivity() {
         FirebaseBootstrap.initialize(applicationContext)
         setContent {
             GadmMobileTheme {
-                GestorGeralApp()
+                GadmV24App()
             }
         }
     }
