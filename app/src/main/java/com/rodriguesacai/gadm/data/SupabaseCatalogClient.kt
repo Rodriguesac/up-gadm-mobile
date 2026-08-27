@@ -59,6 +59,167 @@ class SupabaseCatalogClient {
         }
     }
 
+    suspend fun loadAdminCatalog(): AdminCatalogSnapshot {
+        requireSession()
+        val response = postCatalog(JSONObject().apply { put("action", "bootstrap") })
+
+        val categories = buildList {
+            val rows = response.optJSONArray("categories")
+            if (rows != null) for (index in 0 until rows.length()) {
+                val item = rows.optJSONObject(index) ?: continue
+                add(
+                    AdminCategory(
+                        id = item.optString("id", item.optString("_id")),
+                        name = item.optString("nome", "Categoria"),
+                        description = item.optString("descricao"),
+                        active = item.optBoolean("ativo", true),
+                        order = item.optInt("ordem", 0),
+                        imageUrl = item.optString("imagemUrl", item.optString("imagem")),
+                        icon = item.optString("icone", item.optString("icon"))
+                    )
+                )
+            }
+        }
+
+        val coupons = buildList {
+            val rows = response.optJSONArray("coupons")
+            if (rows != null) for (index in 0 until rows.length()) {
+                val item = rows.optJSONObject(index) ?: continue
+                add(
+                    AdminCoupon(
+                        id = item.optString("id", item.optString("_id")),
+                        code = item.optString("codigo"),
+                        description = item.optString("descricao"),
+                        type = item.optString("tipo"),
+                        value = item.optDouble("valor", 0.0),
+                        minValue = item.optDouble("valorMinimo", 0.0),
+                        active = item.optBoolean("ativo", true),
+                        customerUid = item.optString("clienteUid"),
+                        customerName = item.optString("clienteNome"),
+                        customerEmail = item.optString("clienteEmail"),
+                        customerPhone = item.optString("clienteTelefone"),
+                        uses = item.optInt("usos", 0),
+                        maxUses = item.optInt("maxUsos", 0),
+                        startsAt = item.optString("validadeInicio"),
+                        endsAt = item.optString("validadeFim")
+                    )
+                )
+            }
+        }
+
+        val banners = buildList {
+            val rows = response.optJSONArray("banners")
+            if (rows != null) for (index in 0 until rows.length()) {
+                val item = rows.optJSONObject(index) ?: continue
+                add(
+                    AdminBanner(
+                        id = item.optString("id", item.optString("_id")),
+                        title = item.optString("titulo"),
+                        imageUrl = item.optString("imagemUrl"),
+                        actionType = item.optString("acaoTipo"),
+                        active = item.optBoolean("ativo", true),
+                        order = item.optInt("ordem", 0)
+                    )
+                )
+            }
+        }
+
+        val notices = buildList {
+            val rows = response.optJSONArray("notices")
+            if (rows != null) for (index in 0 until rows.length()) {
+                val item = rows.optJSONObject(index) ?: continue
+                add(
+                    AdminNotice(
+                        id = item.optString("id", item.optString("_id")),
+                        title = item.optString("titulo"),
+                        body = item.optString("texto"),
+                        imageUrl = item.optString("imagemUrl"),
+                        active = item.optBoolean("ativo", true),
+                        audience = item.optString("segmento", item.optString("audience", "cliente")),
+                        severity = item.optString("severity"),
+                        order = item.optInt("ordem", 0)
+                    )
+                )
+            }
+        }
+
+        return AdminCatalogSnapshot(categories, coupons, banners, notices)
+    }
+
+    suspend fun saveCoupon(draft: CouponDraft) {
+        requireSession()
+        val data = JSONObject().apply {
+            put("codigo", draft.code.trim().uppercase())
+            put("descricao", draft.description.trim())
+            put("tipo", draft.type)
+            put("valor", draft.value)
+            put("valorMinimo", draft.minValue)
+            put("ativo", draft.active)
+            put("clienteUid", draft.customerUid)
+            put("clienteNome", draft.customerName)
+            put("clienteEmail", draft.customerEmail)
+            put("clienteTelefone", draft.customerPhone)
+            put("usoUnico", draft.customerUid.isNotBlank() || draft.customerEmail.isNotBlank() || draft.customerPhone.isNotBlank())
+        }
+        postCatalog(JSONObject().apply {
+            put("action", "save_coupon")
+            if (draft.id.isNotBlank()) put("id", draft.id)
+            put("data", data)
+        })
+    }
+
+    suspend fun toggleCoupon(id: String, active: Boolean) {
+        requireSession()
+        postCatalog(JSONObject().apply {
+            put("action", "toggle_coupon")
+            put("id", id)
+            put("active", active)
+        })
+    }
+
+    suspend fun toggleBanner(id: String, active: Boolean) {
+        requireSession()
+        postCatalog(JSONObject().apply {
+            put("action", "toggle_banner")
+            put("id", id)
+            put("active", active)
+        })
+    }
+
+    suspend fun toggleNotice(id: String, active: Boolean) {
+        requireSession()
+        postCatalog(JSONObject().apply {
+            put("action", "toggle_notice")
+            put("id", id)
+            put("active", active)
+        })
+    }
+
+    suspend fun saveCategory(
+        id: String = "",
+        name: String,
+        description: String,
+        order: Int,
+        active: Boolean,
+        imageUrl: String = "",
+        icon: String = ""
+    ) {
+        requireSession()
+        val data = JSONObject().apply {
+            put("nome", name.trim())
+            put("descricao", description.trim())
+            put("ordem", order)
+            put("ativo", active)
+            put("imagemUrl", imageUrl.trim())
+            put("icone", icon.trim())
+        }
+        postCatalog(JSONObject().apply {
+            put("action", "save_category")
+            if (id.isNotBlank()) put("id", id)
+            put("data", data)
+        })
+    }
+
     suspend fun toggleProduct(productId: String, paused: Boolean) {
         requireSession()
         postCatalog(JSONObject().apply {
